@@ -1,0 +1,90 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@theme {
+  --font-poppins: Poppins-Regular;
+  --font-poppins-medium: Poppins-Medium;
+  --font-poppins-semibold: Poppins-SemiBold;
+  --font-poppins-bold: Poppins-Bold;
+
+  --color-brand-blue: #0066ff;
+  --color-brand-black: #1a1a1a;
+  --color-brand-cream: #f5f1e9;
+  --color-brand-coral: #ff7e75;
+  --color-info-blue: #4f9bd3;
+  --color-text-primary: #0d132b;
+  --color-text-secondary: #687280;
+  --color-border: #f5f7bb;
+  --color-background: #ffffff;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+}
+
+/* type h1 - section title: 32px bold 1.2 */
+@utility h1 {
+  font-family: Poppins-Bold;
+  font-size: 32px;
+  line-height: 38.4px;
+}
+
+/* type h2 - section title: 24px semiBold 1.3 */
+@utility h2 {
+  font-family: Poppins-SemiBold;
+  font-size: 24px;
+  line-height: 31.2px;
+}
+
+/* type h3 - section title: 20px semiBold 1.3 */
+@utility h3 {
+  font-family: Poppins-SemiBold;
+  font-size: 20px;
+  line-height: 26px;
+}
+
+/* type h4 - section title: 16px medium 1.4 */
+@utility h4 {
+  font-family: Poppins-Medium;
+  font-size: 16px;
+  line-height: 22.4px;
+}
+
+/* type body-lg - body text: 16px regular 1.6 */
+@utility body-lg {
+  font-family: Poppins-Regular;
+  font-size: 16px;
+  line-height: 25.6px;
+}
+
+/* type body-md - body text: 14px regular 1.6 */
+@utility body-md {
+  font-family: Poppins-Regular;
+  font-size: 14px;
+  line-height: 22.4px;
+}
+
+/* type body-sm - body text: 13px regular 1.6 */
+@utility body-sm {
+  font-family: Poppins-Regular;
+  font-size: 13px;
+  line-height: 20.8px;
+}
+
+/* type caption - supporting text: 11px regular 1.4 */
+@utility caption {
+  font-family: Poppins-Regular;
+  font-size: 11px;
+  line-height: 15.4px;
+}
+
+/* surface card - bordered card surface: 16px radius */
+@utility surface-card {
+  border-radius: 16px;
+  border-width: 1px;
+  border-color: #f5f7bb;
+  background-color: #ffffff;
+}
