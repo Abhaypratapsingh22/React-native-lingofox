@@ -59,6 +59,13 @@ export function VerificationModal({
     }
   }, [visible]);
 
+  // Clear code when a new error arrives
+  useEffect(() => {
+    if (error) {
+      setCode("");
+    }
+  }, [error]);
+
   const handleCodeChange = (text: string) => {
     // Only allow numeric digits up to 6 characters
     const numericText = text.replace(/[^0-9]/g, "").slice(0, 6);

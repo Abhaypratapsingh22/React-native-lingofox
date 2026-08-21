@@ -63,39 +63,46 @@ clerk api /users/user_abc123/unlock -X POST
 
 # Delete (PREVIEW FIRST)
 clerk api /users/user_abc123 -X DELETE --dry-run
-clerk api /users/user_abc123 -X DELETE --yes
+# Review the preview, obtain explicit approval, then run without --dry-run.
+clerk api /users/user_abc123 -X DELETE
 ```
 
 ### Test users (development only)
 
-For test accounts you need to sign into without real email or SMS delivery, Clerk provides two magic patterns that both verify with the fixed OTP `424242`. Use them on development instances; production rejects them.
+For test accounts you need to sign into without real email or SMS delivery, Clerk provides two magic patterns that both verify with the fixed OTP `424242`. Use them on development instances; they can also be enabled on production instances with the test mode setting.
 
 **By email.** Any address with the `+clerk_test` subaddress is recognized as a test email. The domain portion is arbitrary.
 
 ```sh
 # Create a test user with a test email (dev instance)
-# `skip_password_checks` isn't a curated flag, so pass the body via `-d`.
-clerk users create -d '{
-  "email_address": ["demo+clerk_test@example.com"],
-  "password": "TestPass123!",
-  "skip_password_checks": true
-}' --yes
+# `skip_password_checks` isn't a curated flag, so pass the body via `--file`.
+read -r -s -p 'Test-only password: ' TEST_PASSWORD; printf '\n'
+tmpdir=$(mktemp -d); chmod 700 "$tmpdir"; trap 'rm -rf "$tmpdir"' EXIT
+jq -n --arg password "$TEST_PASSWORD" \
+  '{email_address:["demo+clerk_test@example.com"], password:$password, skip_password_checks:true}' \
+  > "$tmpdir/test-user.json"
+clerk api /users --file "$tmpdir/test-user.json" --dry-run
+# Review the preview, obtain explicit approval, then repeat without --dry-run.
+clerk api /users --file "$tmpdir/test-user.json"
 ```
 
 **By phone.** Any US fictional phone number in the `+1 (XXX) 555-0100` through `+1 (XXX) 555-0199` range is recognized as a test phone. Pass the E.164 form.
 
 ```sh
 # Create a test user with a test phone (dev instance)
-clerk users create -d '{
-  "phone_number": ["+12015550100"],
-  "password": "TestPass123!",
-  "skip_password_checks": true
-}' --yes
+read -r -s -p 'Test-only password: ' TEST_PASSWORD; printf '\n'
+tmpdir=$(mktemp -d); chmod 700 "$tmpdir"; trap 'rm -rf "$tmpdir"' EXIT
+jq -n --arg password "$TEST_PASSWORD" \
+  '{phone_number:["+12015550100"], password:$password, skip_password_checks:true}' \
+  > "$tmpdir/test-user.json"
+clerk api /users --file "$tmpdir/test-user.json" --dry-run
+# Review the preview, obtain explicit approval, then repeat without --dry-run.
+clerk api /users --file "$tmpdir/test-user.json"
 ```
 
 When signing in as either user in a browser or Playwright, enter `424242` at the OTP prompt.
 
-These patterns only apply to development instances. In production, Device Trust blocks sign-in regardless of suffix or number, and using real-looking test addresses is highly discouraged. Test addresses and numbers do not count against the dev-instance monthly caps (20 SMS, 100 emails). See [Clerk's test emails and phones reference](https://clerk.com/docs/guides/development/testing/test-emails-and-phones) for the full contract.
+These patterns work when Clerk test mode is enabled (default on development instances; can be enabled on production instances). On production without test mode, real-looking test addresses are highly discouraged. Test addresses and numbers do not count against the dev-instance monthly caps (20 SMS, 100 emails). See [Clerk's test emails and phones reference](https://clerk.com/docs/guides/development/testing/test-emails-and-phones) for the full contract.
 
 ## Organizations
 
@@ -108,18 +115,30 @@ clerk api '/organizations?limit=20&query=acme'
 clerk api /organizations/org_abc123
 
 # Create
+clerk api /organizations -d '{"name":"Acme","created_by":"user_abc123"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /organizations -d '{"name":"Acme","created_by":"user_abc123"}'
 
 # Update
+clerk api /organizations/org_abc123 -X PATCH -d '{"name":"Acme Inc."}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /organizations/org_abc123 -X PATCH -d '{"name":"Acme Inc."}'
 
 # Members
 clerk api /organizations/org_abc123/memberships
+clerk api /organizations/org_abc123/memberships -d '{"user_id":"user_xyz","role":"org:member"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /organizations/org_abc123/memberships -d '{"user_id":"user_xyz","role":"org:member"}'
+clerk api /organizations/org_abc123/memberships/user_xyz -X PATCH -d '{"role":"org:admin"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /organizations/org_abc123/memberships/user_xyz -X PATCH -d '{"role":"org:admin"}'
 clerk api /organizations/org_abc123/memberships/user_xyz -X DELETE --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
+clerk api /organizations/org_abc123/memberships/user_xyz -X DELETE
 
 # Invitations
+clerk api /organizations/org_abc123/invitations -d '{"email_address":"new@acme.com","role":"org:member"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /organizations/org_abc123/invitations -d '{"email_address":"new@acme.com","role":"org:member"}'
 ```
 
@@ -131,7 +150,8 @@ clerk api /instance/organization_settings
 
 # Preview, then enable organizations for this instance
 clerk enable orgs --dry-run
-clerk enable orgs --yes
+# Review the preview, obtain explicit approval, then run without --dry-run.
+clerk enable orgs
 ```
 
 For org settings the toggle flags don't cover, fall back to `clerk config patch --json '{"organization_settings":{...}}'`. Deeper org workflows (roles, memberships, components) live in the `clerk-orgs` skill.
@@ -143,6 +163,8 @@ For org settings the toggle flags don't cover, fall back to `clerk config patch 
 clerk api '/sessions?user_id=user_abc123&status=active'
 
 # Revoke a session
+clerk api /sessions/sess_abc123/revoke -X POST --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /sessions/sess_abc123/revoke -X POST
 ```
 
@@ -157,7 +179,7 @@ clerk imp user_abc123 --print
 # Resolve by exact email instead of user ID
 clerk imp alice@example.com --print
 
-# Short-lived token, no confirmation prompt
+# Short-lived token -- requires --yes in agent mode (only command that needs it)
 clerk imp user_abc123 --yes --expires-in 900
 
 # Revoke a pending actor token (the id is printed at creation - capture it then)
@@ -167,6 +189,8 @@ clerk imp revoke act_abc123
 To mint a one-time **sign-in token** instead - for building custom token sign-in flows, signing in *as* the user with no actor audit trail - use the raw API:
 
 ```sh
+clerk api /sign_in_tokens -d '{"user_id":"user_abc123"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /sign_in_tokens -d '{"user_id":"user_abc123"}'
 ```
 
@@ -174,7 +198,11 @@ clerk api /sign_in_tokens -d '{"user_id":"user_abc123"}'
 
 ```sh
 clerk api /invitations
+clerk api /invitations -d '{"email_address":"new@example.com","redirect_url":"https://example.com/welcome"}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /invitations -d '{"email_address":"new@example.com","redirect_url":"https://example.com/welcome"}'
+clerk api /invitations/inv_abc123/revoke -X POST --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /invitations/inv_abc123/revoke -X POST
 ```
 
@@ -183,6 +211,12 @@ clerk api /invitations/inv_abc123/revoke -X POST
 ```sh
 clerk api /jwt_templates
 clerk api /jwt_templates/jtmp_abc123
+clerk api /jwt_templates -d '{
+  "name": "supabase",
+  "claims": {"aud": "authenticated", "role": "authenticated"},
+  "lifetime": 60
+}' --dry-run
+# Review the preview, obtain explicit approval, then run without --dry-run.
 clerk api /jwt_templates -d '{
   "name": "supabase",
   "claims": {"aud": "authenticated", "role": "authenticated"},

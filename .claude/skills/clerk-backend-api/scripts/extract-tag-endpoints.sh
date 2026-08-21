@@ -205,4 +205,21 @@ if (refs.size > 0) {
     console.log(`- \`${name}\` (${category})`);
   }
 }
+
+// Write endpoints to a temporary file in the same directory as the specFile
+const endpointsPath = specFile.replace("spec.yml", "endpoints.txt");
+fs.writeFileSync(endpointsPath, endpoints.map(ep => `${ep.method} ${ep.path}`).join("\n"));
 SCRIPT
+
+# If extract-endpoint-detail.sh is available, call it for each endpoint in endpoints.txt
+DETAIL_SCRIPT="$(dirname "$0")/extract-endpoint-detail.sh"
+if [[ -f "$DETAIL_SCRIPT" && -f "$TMPDIR_WORK/endpoints.txt" ]]; then
+  echo -e "\n## Endpoint Details\n"
+  while read -r method path; do
+    if [[ -n "$method" && -n "$path" ]]; then
+      # Run extract-endpoint-detail.sh, passing SPEC as stdin
+      bash "$DETAIL_SCRIPT" "$path" "$method" < "$SPEC"
+      echo ""
+    fi
+  done < "$TMPDIR_WORK/endpoints.txt"
+fi

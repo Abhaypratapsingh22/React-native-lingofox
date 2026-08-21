@@ -1,6 +1,6 @@
 # Framework-Specific Webhook Handlers
 
-Each Clerk SDK package ships its own `verifyWebhook` adapter that reads the framework's native request type and uses `CLERK_WEBHOOK_SIGNING_SECRET` automatically. Use the framework-specific import; do not roll your own with raw `svix`.
+Each Clerk SDK package ships its own `verifyWebhook` adapter that reads the framework's native request type and uses framework-specific configuration for the signing secret. Use the framework-specific import; do not roll your own with raw `svix`.
 
 Same `WebhookEvent` payload shape across all frameworks. See SKILL.md for payload field reference and the full event catalog.
 
@@ -210,7 +210,7 @@ export default defineConfig({
 ## Common Patterns Across Frameworks
 
 - All `verifyWebhook` adapters return the same `WebhookEvent` discriminated union, so handler logic (`if (evt.type === ...)`) is identical.
-- All adapters read `CLERK_WEBHOOK_SIGNING_SECRET` automatically except Astro (pass `signingSecret` option).
+- All adapters use framework-specific configuration for the signing secret. The `@clerk/nuxt` adapter expects `NUXT_CLERK_WEBHOOK_SIGNING_SECRET`; other adapters read `CLERK_WEBHOOK_SIGNING_SECRET` automatically except Astro (pass `signingSecret` option explicitly).
 - All adapters require a public webhook route, exclude `/api/webhooks(.*)` from middleware protection.
 - Vite-based frameworks (Nuxt, React Router, TanStack Start) need `allowedHosts` configured when tunneling localhost via ngrok in development.
 - Express specifically needs `express.raw({ type: 'application/json' })` for the webhook route, raw body bytes are required for signature verification.

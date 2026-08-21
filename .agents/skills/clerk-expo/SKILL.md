@@ -88,7 +88,8 @@ Do not blend prebuilt components and custom flows for the same auth step (e.g. `
 - Native components matured: iOS moved to Expo Modules; native↔JS session sync is automatic and bidirectional — never call `setActive()` after native-component auth.
 - The config plugin accepts a `theme` JSON file for native component styling (see references/prebuilt-components.md).
 - Native Google sign-in uses the separate `@clerk/expo-google-signin` package.
-- For native Google sign-in, explain that `@clerk/expo-google-signin` and `expo-crypto` are required packages. The Expo plugins list should contain only `@clerk/expo` and `@clerk/expo-google-signin`; do not register `expo-crypto` as a plugin. Obtain explicit user approval before installing packages or modifying plugin configuration; without approval, do not change dependencies or plugins.
+- For native Google sign-in with `@clerk/expo` **4.0.0 and later**: explain that `@clerk/expo-google-signin` and `expo-crypto` are required packages. The Expo plugins list should contain only `@clerk/expo` and `@clerk/expo-google-signin`; do not register `expo-crypto` as a plugin. Obtain explicit user approval before installing packages or modifying plugin configuration; without approval, do not change dependencies or plugins.
+- For `@clerk/expo` **3.5.x and 3.6.x**: native Google sign-in remains bundled in `@clerk/expo` — no separate package installation or plugin registration is needed. The `@clerk/expo` config plugin handles Google sign-in internally.
 
 ## Common Pitfalls
 

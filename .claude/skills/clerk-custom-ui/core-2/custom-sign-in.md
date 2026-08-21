@@ -72,6 +72,21 @@ Set the active session after successful authentication:
 await setActive({ session: signIn.createdSessionId })
 ```
 
+### Handling needs_client_trust
+
+When a user signs in from a new device without MFA enabled, the status may be `needs_client_trust`. Handle it by checking available second-factor strategies:
+
+```typescript
+if (result.status === 'needs_client_trust') {
+  // Check supported second-factor strategies
+  const factors = signIn.supportedSecondFactors;
+  // factors may include: 'email_code', 'phone_code'
+  // Use the appropriate prepare/attempt flow for the available factor
+  await signIn.prepareFirstFactor({ strategy: 'email_code' });
+  // ... then attemptFirstFactor with the code
+}
+```
+
 ### Password Reset
 
 ```typescript
@@ -148,6 +163,21 @@ export default function SignInPage() {
 
       if (result.status === 'needs_second_factor') {
         setStep('mfa')
+        return
+      }
+
+      if (result.status === 'needs_client_trust') {
+        // Device Trust: check supported second-factor strategies
+        const factors = signIn.supportedSecondFactors;
+        // Typically 'email_code' or 'phone_code' for Device Trust
+        // For simplicity, use email_code if available
+        if (factors.includes('email_code')) {
+          await signIn.prepareFirstFactor({ strategy: 'email_code' });
+          // In a real app, you'd prompt for the code here
+          // For this example, we'll just set an error
+          setError('Please check your email for a verification code')
+          return
+        }
         return
       }
 

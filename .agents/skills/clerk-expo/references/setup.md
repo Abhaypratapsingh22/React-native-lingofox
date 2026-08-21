@@ -21,8 +21,8 @@ npx expo install expo-dev-client
 | Feature | Install |
 |---------|---------|
 | Browser SSO/OAuth (`useSSO`) | `npx expo install expo-auth-session expo-web-browser` |
-| Native Google sign-in | `npx expo install @clerk/expo-google-signin expo-crypto` |
-| Native Apple sign-in | `npx expo install expo-apple-authentication` |
+| Native Google sign-in (`useSignInWithGoogle`) | `npx expo install @clerk/expo-google-signin expo-crypto` |
+| Native Apple sign-in (`useSignInWithApple`) | `npx expo install expo-apple-authentication` |
 | Biometrics (`useLocalCredentials`) | `npx expo install expo-local-authentication` |
 | Passkeys | `npx expo install @clerk/expo-passkeys` |
 
@@ -48,7 +48,17 @@ Rules:
 
 ## 4. Config plugin
 
-Verify `app.json` / `app.config.js` includes both plugins (`npx expo install` usually adds them):
+Verify `app.json` / `app.config.js` includes the base plugins (`npx expo install` usually adds them):
+
+```json
+{
+  "expo": {
+    "plugins": ["expo-secure-store", "@clerk/expo"]
+  }
+}
+```
+
+**Only when using `useSignInWithGoogle()` (native Google sign-in):** add `@clerk/expo-google-signin` to the plugins array and install `expo-crypto` (do not register `expo-crypto` as a plugin):
 
 ```json
 {

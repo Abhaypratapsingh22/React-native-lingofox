@@ -79,10 +79,10 @@ Otherwise fall back to a package runner, in this order (matches the CLI's own `p
 
 | Project package manager   | Invocation                       |
 | ------------------------- | -------------------------------- |
-| bun (`bun.lock*`)         | `bunx clerk@latest`     |
-| npm (`package-lock.json`) | `npx -y clerk@latest`   |
-| pnpm (`pnpm-lock.yaml`)   | `pnpm dlx clerk@latest` |
-| yarn >= 2 (`yarn.lock`)   | `yarn dlx clerk@latest` |
+| bun (`bun.lock*`)         | `bunx clerk@5.3.0`     |
+| npm (`package-lock.json`) | `npx -y clerk@5.3.0`   |
+| pnpm (`pnpm-lock.yaml`)   | `pnpm dlx clerk@5.3.0` |
+| yarn >= 2 (`yarn.lock`)   | `yarn dlx clerk@5.3.0` |
 
 Yarn Classic (v1) has no `dlx`; treat those projects as "no preferred runner" and fall back to the first runner from the list above that's on PATH.
 

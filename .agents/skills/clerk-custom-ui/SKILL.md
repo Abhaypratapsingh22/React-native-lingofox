@@ -44,9 +44,11 @@ Core 3 minimums are `@clerk/nextjs` v7.5.2+, `@clerk/react` v6.9.1+, and `@clerk
 
 ## Appearance Customization
 
-Appearance customization applies to both Core 2 and the current SDK.
+Appearance customization applies to both Core 2 and the current SDK, but the configuration differs between web and Expo native.
 
-### Component Customization Options
+### Web (Next.js, React, React Router, etc.)
+
+#### Component Customization Options
 
 | Task | Documentation |
 |------|---------------|
@@ -57,7 +59,7 @@ Appearance customization applies to both Core 2 and the current SDK.
 | CAPTCHA configuration | https://clerk.com/docs/nextjs/guides/customizing-clerk/appearance-prop/captcha |
 | Bring your own CSS | https://clerk.com/docs/nextjs/guides/customizing-clerk/appearance-prop/bring-your-own-css |
 
-### Appearance Pattern
+#### Appearance Pattern
 
 ```typescript
 <SignIn
@@ -76,7 +78,7 @@ Appearance customization applies to both Core 2 and the current SDK.
 
 > **Core 2 ONLY (skip if current SDK):** The `options` property was named `layout`. Use `layout: { logoImageUrl: '...', socialButtonsVariant: '...' }` instead of `options`.
 
-### variables (colors, typography, borders)
+#### variables (colors, typography, borders)
 
 | Property | Description |
 |----------|-------------|
@@ -88,7 +90,7 @@ Appearance customization applies to both Core 2 and the current SDK.
 
 > **Core 2 ONLY (skip if current SDK):** `colorRing` and `colorModalBackdrop` rendered at 15% opacity by default.
 
-### options (structure, logo, social buttons)
+#### options (structure, logo, social buttons)
 
 | Property | Description |
 |----------|-------------|
@@ -99,7 +101,7 @@ Appearance customization applies to both Core 2 and the current SDK.
 
 > **Core 2 ONLY (skip if current SDK):** This property is called `layout`, not `options`. Also, `showOptionalFields` defaulted to `true`.
 
-### Themes
+#### Themes
 
 Install themes from `@clerk/ui`:
 
@@ -127,7 +129,7 @@ import { dark, neobrutalism } from '@clerk/ui/themes'
 
 **Available themes:** `default`, `dark`, `neobrutalism`, `shadcn`, `simple`, `shadesOfPurple`
 
-#### shadcn Theme
+##### shadcn Theme
 
 > **Optional integration:** If the project has `components.json` (shadcn/ui installed), explain the optional shadcn theme integration and ask for explicit user approval before installing or using `@clerk/ui`. Without approval, do not add or use that dependency.
 
@@ -152,6 +154,58 @@ Also import shadcn CSS in your global styles:
 > ```css
 > @import '@clerk/themes/shadcn.css';
 > ```
+
+### Expo Native
+
+For Expo/React Native apps using `@clerk/expo`, native components (`AuthView`, `UserButton`, etc.) are styled via a theme JSON file configured through the `@clerk/expo` config plugin.
+
+1. Create a `clerk-theme.json` file in your project root:
+
+```json
+{
+  "colors": {
+    "primary": "#0000ff",
+    "background": "#ffffff",
+    "text": "#000000",
+    "textSecondary": "#666666",
+    "border": "#e0e0e0",
+    "error": "#ff0000"
+  },
+  "spacing": {
+    "unit": 8
+  },
+  "borderRadius": 8,
+  "typography": {
+    "fontFamily": "System",
+    "fontSize": 16
+  }
+}
+```
+
+2. Add the theme to your `app.json` / `app.config.js` plugins array:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      "expo-secure-store",
+      ["@clerk/expo", { "theme": "./clerk-theme.json" }]
+    ]
+  }
+}
+```
+
+3. Rebuild the native app:
+```bash
+npx expo prebuild --clean
+npx expo run:ios
+# or
+npx expo run:android
+```
+
+The theme JSON schema is defined in the `@clerk/expo` package. See the [native components docs](https://clerk.com/docs/reference/expo/native-components/auth-view) for the full theme configuration options.
+
+> **Note:** Native components require a development build (not Expo Go). The theme file only affects `@clerk/expo/native` components, not custom flows built with `useSignIn`/`useSignUp` hooks.
 
 ## Workflow
 
