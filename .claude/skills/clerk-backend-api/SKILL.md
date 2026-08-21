@@ -131,7 +131,9 @@ data = json.load(sys.stdin)
 if isinstance(data, list):
     print(f'Found {len(data)} users:')
     for u in data:
-        print(f'  {u[\"id\"]}: {u.get(\"email_addresses\", [{}])[0].get(\"email_address\", \"no email\")}')
+        emails = u.get('email_addresses', [])
+        email = emails[0].get('email_address', 'no email') if emails else 'no email'
+        print(f'  {u[\"id\"]}: {email}')
 else:
     print(json.dumps(data, indent=2))
 "
@@ -223,7 +225,8 @@ Returns: OrganizationInvitation object
 Template for GET requests:
 ```bash
 curl -s "https://api.clerk.com/v1${PATH}${QUERY_STRING}" \
-  -H "Authorization: Bearer $CLERK_SECRET_KEY"
+  -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+  -H "Clerk-API-Version: $CLERK_API_VERSION"
 ```
 
 Template for POST/PATCH requests:
@@ -231,13 +234,15 @@ Template for POST/PATCH requests:
 curl -s -X ${METHOD} "https://api.clerk.com/v1${PATH}" \
   -H "Authorization: Bearer $CLERK_SECRET_KEY" \
   -H "Content-Type: application/json" \
+  -H "Clerk-API-Version: $CLERK_API_VERSION" \
   -d '${BODY_JSON}'
 ```
 
 Template for DELETE requests:
 ```bash
 curl -s -X DELETE "https://api.clerk.com/v1${PATH}" \
-  -H "Authorization: Bearer $CLERK_SECRET_KEY"
+  -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+  -H "Clerk-API-Version: $CLERK_API_VERSION"
 ```
 
 **After getting the response:** Parse and display it clearly. Use `python3 -c "import sys,json; data=json.load(sys.stdin); print(json.dumps(data, indent=2))"` to pretty-print JSON. Extract key fields (id, email, name, etc.) and summarize them for the user.
@@ -425,7 +430,9 @@ data = json.load(sys.stdin)
 if isinstance(data, list):
     print(f'Found {len(data)} users:')
     for u in data:
-        print(f'  {u[\"id\"]}: {u.get(\"email_addresses\", [{}])[0].get(\"email_address\", \"no email\")}')
+        emails = u.get('email_addresses', [])
+        email = emails[0].get('email_address', 'no email') if emails else 'no email'
+        print(f'  {u["id"]}: {email}')
 else:
     print(json.dumps(data, indent=2))
 "

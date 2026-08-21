@@ -26,7 +26,7 @@ const { startSSOFlow } = useSSO()
 
 const onPress = async () => {
   try {
-    const { createdSessionId, setActive, signUp } = await startSSOFlow({
+    const { createdSessionId, setActive, signIn, signUp } = await startSSOFlow({
       strategy: 'oauth_google', // oauth_apple, oauth_github, oauth_microsoft, ...
     })
     if (createdSessionId) {
@@ -35,8 +35,10 @@ const onPress = async () => {
     } else if (signUp?.status === 'missing_requirements') {
       // Instance requires fields the provider didn't supply (e.g. username) —
       // collect them and signUp.update(...), or relax requirements in the dashboard
+    } else if (signIn?.status && signIn.status !== 'complete') {
+      // signIn exists but needs follow-up (e.g., MFA, client trust) — handle accordingly
     }
-    // No createdSessionId and no missing requirements → user cancelled; do nothing.
+    // No createdSessionId, no missing requirements, no incomplete signIn → user cancelled; do nothing.
   } catch (err) {
     console.error(JSON.stringify(err, null, 2))
   }
@@ -61,8 +63,9 @@ Setup:
 1. `npx expo install @clerk/expo-google-signin expo-crypto`
 2. Env vars in `.env` (values from the Google Cloud OAuth clients configured for the Clerk instance):
    - `EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID` (always required)
+   - `EXPO_PUBLIC_CLERK_GOOGLE_ANDROID_CLIENT_ID` (required for native Android sign-in)
    - `EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID` (iOS)
-   - `EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME` (iOS — the config plugin writes it into the iOS URL types at prebuild; prebuild fails without it)
+   - `EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME` (iOS — optional; pass through Expo `extra` only when native iOS sign-in is enabled, not a prebuild requirement)
 3. Register `@clerk/expo` and `@clerk/expo-google-signin` in the Expo plugins array, then rebuild.
 
 Full provider-side setup lives at https://clerk.com/docs/guides/configure/auth-strategies/sign-in-with-google — fetch it if the Google Cloud side isn't already configured.

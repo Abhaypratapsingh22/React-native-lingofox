@@ -51,12 +51,17 @@ Route guards are client-side only; authorize on the server:
 import { useAuth } from '@clerk/expo'
 
 const { getToken } = useAuth()
+const token = await getToken()
+if (!token) {
+  // Handle missing token - user not authenticated or token unavailable
+  throw new Error('Authentication required')
+}
 const res = await fetch(`${API_URL}/endpoint`, {
-  headers: { Authorization: `Bearer ${await getToken()}` },
+  headers: { Authorization: `Bearer ${token}` },
 })
 ```
 
-Verify the token server-side with Clerk's backend SDK for your server framework (e.g. `@clerk/backend`'s `verifyToken`, or the framework SDK's `getAuth`). Clerk has no official Expo Router API-routes (`+api.ts`) integration — treat any server code as a normal backend and use `@clerk/backend`.
+Verify the token server-side with Clerk's backend SDK for your server framework (e.g. `@clerk/backend`'s `verifyToken`, or the framework SDK's `getAuth`). Clerk has no dedicated Expo Router adapter; `+api.ts` routes are standard server routes — treat them as normal backend handlers and use `@clerk/backend` for authentication and Backend API operations.
 
 ## Push notifications with user context
 

@@ -32,6 +32,10 @@ clerk init --framework <next|react|vue|nuxt|astro|react-router|tanstack-react-st
 
 `--template <b2b-saas|b2c-saas|native|waitlist>` pre-configures the keyless app. Caveats — a signed-out human in an *existing* project still gets the login flow unless they pass `--keyless`; `--template`/`--fresh` error on any non-keyless run; login only auto-claims what `clerk init` created. See [clerk-cli](../clerk-cli/references/auth.md#keyless-operating-without-an-account).
 
+**Incomplete scaffolding for Expo, Express, and Fastify:** `clerk init` detects these frameworks but may not fully scaffold the integration. After running `clerk init`, inspect the CLI output — if it directs you to the framework's quickstart guide, follow the official quickstart to add any missing authentication configuration (provider setup, middleware, token cache, config plugins) before reporting setup complete.
+
+**Incomplete scaffolding for Expo, Express, and Fastify:** `clerk init` detects these frameworks but may not fully scaffold the integration. After running `clerk init`, inspect the CLI output — if it directs you to the framework's quickstart guide, follow the official quickstart to add any missing authentication configuration (provider setup, middleware, token cache, config plugins) before reporting setup complete.
+
 ### Scenario B — Existing project, existing Clerk app
 
 ```bash
@@ -61,6 +65,8 @@ clerk doctor --json                   # framework integration health check
 ### Rotate the secret key (replaces Dashboard rotation)
 
 PLAPI exposes secret-key rotation directly. Use raw `clerk api` until the friendly wrapper ships:
+
+**Before rotating:** Display the target application ID and environment (development/production) and obtain explicit user confirmation. The rotation response contains new secret key values — treat them as secret material: **do not expose, log, commit, or paste the returned secret keys anywhere.**
 
 ```bash
 clerk api --platform POST /v1/platform/applications/<app_id>/rotate_secret_keys \

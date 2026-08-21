@@ -87,6 +87,8 @@ export default function SignUpScreen() {
             router.replace("/");
           },
         });
+      } else {
+        setVerificationError(`Sign-up status is incomplete: ${signUp.status}`);
       }
     } catch (err: any) {
       const message =

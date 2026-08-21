@@ -46,9 +46,9 @@ const { error } = await signIn.passkey({ flow: 'discoverable' })
 ### Web3
 
 ```typescript
-const { error } = await signIn.web3({ strategy: 'web3_solana_signature' })
+const { error } = await signIn.web3({ strategy: 'web3_solana_signature', provider: 'solana', walletName: 'Phantom' })
 // or
-const { error } = await signIn.web3({ strategy: 'web3_base_signature' })
+const { error } = await signIn.web3({ strategy: 'web3_base_signature', provider: 'base' })
 ```
 
 ### Ticket (Invitation link)
@@ -200,9 +200,21 @@ export default function Page() {
       password,
     })
 
-    // If you're using the authenticator app strategy, remove this check.
-    if (signIn.status === 'needs_second_factor') {
-      await signIn.mfa.sendPhoneCode()
+    // Handle second factor (MFA) or Device Trust (needs_client_trust)
+    if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_client_trust') {
+      // Check supportedSecondFactors for available strategies
+      const factors = signIn.supportedSecondFactors;
+      // factors may include: 'totp', 'backup_code', 'email_code', 'phone_code'
+      // For Device Trust (needs_client_trust), typically 'email_code' or 'phone_code'
+      // For MFA (needs_second_factor), includes configured MFA methods
+      
+      if (factors.includes('phone_code')) {
+        await signIn.mfa.sendPhoneCode();
+      } else if (factors.includes('email_code')) {
+        await signIn.mfa.sendEmailCode();
+      }
+      // If using authenticator app (TOTP), the user enters the code directly
+      // without needing to send a code first.
     }
 
     if (signIn.status === 'complete') {

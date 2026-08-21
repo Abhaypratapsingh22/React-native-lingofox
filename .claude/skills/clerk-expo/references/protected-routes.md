@@ -6,7 +6,7 @@ Gate screens on auth state with layout-level guards. Applies to both prebuilt an
 
 ## Recommended structure
 
-```
+```text
 src/app/
 ├── _layout.tsx           # Root layout with ClerkProvider (see setup.md)
 ├── (auth)/               # Public: sign-in / sign-up
@@ -28,7 +28,7 @@ import { useAuth } from '@clerk/expo'
 import { Redirect, Stack } from 'expo-router'
 
 export default function Layout() {
-  const { isSignedIn, isLoaded } = useAuth()
+  const { isSignedIn, isLoaded } = useAuth({ treatPendingAsSignedOut: false })
 
   if (!isLoaded) return null
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />
@@ -43,7 +43,7 @@ import { useAuth } from '@clerk/expo'
 import { Redirect, Stack } from 'expo-router'
 
 export default function AuthRoutesLayout() {
-  const { isSignedIn, isLoaded } = useAuth()
+  const { isSignedIn, isLoaded } = useAuth({ treatPendingAsSignedOut: false })
 
   if (!isLoaded) return null
   if (isSignedIn) return <Redirect href="/" />
