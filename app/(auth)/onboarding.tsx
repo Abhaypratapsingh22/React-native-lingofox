@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "@/constants/images";
 
@@ -8,8 +8,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    // Navigates to home or next step (Sign up screen in future prompts)
-    router.push("/");
+    router.push("/(auth)/sign-up");
   };
 
   return (
@@ -19,7 +18,7 @@ export default function OnboardingScreen() {
         <View className="flex-row items-center justify-center gap-2.5 pt-2">
           <Image
             source={images.mascotLogo}
-            className="w-10 h-10"
+            style={styles.logoImage}
             resizeMode="contain"
           />
           <Text className="font-poppins-bold text-[28px] text-text-primary tracking-tight">
@@ -42,7 +41,7 @@ export default function OnboardingScreen() {
         <View className="flex-1 items-center justify-center relative my-4">
           <Image
             source={images.mascotWelcome}
-            className="w-72 h-72"
+            style={styles.heroImage}
             resizeMode="contain"
           />
 
@@ -100,6 +99,8 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             onPress={handleGetStarted}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Get Started"
             className="w-full bg-brand-blue h-14 rounded-2xl flex-row items-center justify-center relative"
           >
             <Text className="text-white font-poppins-semibold text-lg">
@@ -117,3 +118,14 @@ export default function OnboardingScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  logoImage: {
+    width: 40,
+    height: 40,
+  },
+  heroImage: {
+    width: 288,
+    height: 288,
+  },
+});
