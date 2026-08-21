@@ -20,7 +20,7 @@ if (!publishableKey) {
 
 function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; fontsError: any }) {
   const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
   const router = useRouter();
   const hasHydrated = useLanguageStore((state) => state.hasHydrated);
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
@@ -35,6 +35,7 @@ function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; font
 
     const inAuthGroup = segments[0] === "(auth)";
     const onLanguageSelection = segments[0] === "language-selection";
+    const isAtRoot = segments.length === 0 || !segments[0];
 
     if (!isSignedIn) {
       // Unauthenticated users -> /onboarding
@@ -49,8 +50,8 @@ function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; font
           router.replace("/language-selection");
         }
       } else {
-        // With language selection -> /home (only if we are still in auth group)
-        if (inAuthGroup) {
+        // With language selection -> /home (if in auth group or at root)
+        if (inAuthGroup || isAtRoot) {
           router.replace("/home" as any);
         }
       }
