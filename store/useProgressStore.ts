@@ -32,10 +32,13 @@ export const useProgressStore = create<ProgressState>()(
           };
         }),
       removeCompletedLesson: (lessonId, xpReward) =>
-        set((state) => ({
-          completedLessons: state.completedLessons.filter((id) => id !== lessonId),
-          xp: Math.max(0, state.xp - xpReward),
-        })),
+        set((state) => {
+          if (!state.completedLessons.includes(lessonId)) return {};
+          return {
+            completedLessons: state.completedLessons.filter((id) => id !== lessonId),
+            xp: Math.max(0, state.xp - xpReward),
+          };
+        }),
       toggleCompletedLesson: (lessonId, xpReward) =>
         set((state) => {
           const isCompleted = state.completedLessons.includes(lessonId);
