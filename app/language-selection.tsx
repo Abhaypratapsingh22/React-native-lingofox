@@ -6,9 +6,18 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { languages } from "@/data/languages";
 import { images } from "@/constants/images";
 
+import { useAuth } from "@clerk/expo";
+
 export default function LanguageSelectionScreen() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  if (!isLoaded) return null;
+  if (!isSignedIn) {
+    router.replace("/(auth)/sign-in");
+    return null;
+  }
 
   const handleConfirm = () => {
     if (selectedId) {

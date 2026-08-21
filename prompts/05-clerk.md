@@ -103,6 +103,11 @@ scaffold with explicit framework and package manager options:
 clerk init --framework <framework> --pm <package-manager> --app app_3IBGX2HrWXUuj9BQCFT5u3NSthh
 ```
 
+**Branch on detected framework for empty directories:**
+- **Expo/React Native** (`expo`): Use Expo setup guidance and `@clerk/expo` package. Follow the Expo quickstart at https://clerk.com/docs/expo/getting-started/quickstart for complete integration steps including config plugins, token cache, and native build requirements.
+- **Next.js** (`next`): Use Next.js scaffolding and `@clerk/nextjs` package. Follow the Next.js quickstart for middleware, proxy, and provider setup.
+- **Other frameworks** (React Router, Astro, Nuxt, TanStack Start, Vue, React, Express, Fastify): Use the framework-specific Clerk package and follow the corresponding quickstart.
+
 When choosing a package manager, use the user's preference. If the directory
 is not truly empty and contains a lockfile or package manager config, use
 these signals:

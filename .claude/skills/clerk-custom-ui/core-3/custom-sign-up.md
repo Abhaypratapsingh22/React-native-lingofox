@@ -85,8 +85,8 @@ const { error } = await signUp.verifications.verifyPhoneCode({ code: '123456' })
 ### Email Link
 
 ```typescript
-// verificationUrl: where the user lands after clicking the email link (relative or absolute)
-const { error } = await signUp.verifications.sendEmailLink({ verificationUrl: '/verify' })
+// verificationUrl: absolute URL where the user lands after clicking the email link
+const { error } = await signUp.verifications.sendEmailLink({ verificationUrl: 'https://yourapp.com/verify' })
 // User clicks the link in their email to verify
 ```
 
@@ -202,6 +202,38 @@ export default function SignUpPage() {
 
   if (signUp.status === 'complete' || isSignedIn) {
     return null
+  }
+
+  // Handle missing_requirements: render inputs for ALL required missing fields
+  if (signUp.status === 'missing_requirements' && signUp.missingFields.length > 0) {
+    return (
+      <>
+        <h1>Complete your sign up</h1>
+        <form
+          action={async (formData: FormData) => {
+            // Collect all missing field values
+            const updates: Record<string, string> = {};
+            signUp.missingFields.forEach((field) => {
+              const value = formData.get(field) as string;
+              if (value) updates[field] = value;
+            });
+            // Update sign-up with all collected missing fields
+            await signUp.update(updates);
+          }}
+        >
+          {signUp.missingFields.map((field) => (
+            <div key={field}>
+              <label htmlFor={field}>{field.replace(/_/g, ' ')}</label>
+              <input id={field} name={field} type="text" />
+              {errors.fields[field] && <p>{errors.fields[field].message}</p>}
+            </div>
+          ))}
+          <button type="submit" disabled={fetchStatus === 'fetching'}>
+            Continue
+          </button>
+        </form>
+      </>
+    )
   }
 
   if (

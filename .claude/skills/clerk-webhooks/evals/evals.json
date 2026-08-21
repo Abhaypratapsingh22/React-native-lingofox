@@ -4,7 +4,7 @@
     {
       "id": 1,
       "prompt": "every time a user signs up on our app i need to create a row in our users table in postgres (we use prisma). the table has id, email, name, clerkId, createdAt columns. can you set up the webhook handler? we're on next.js app router",
-      "expected_output": "Creates webhook route handler at app/api/webhooks/route.ts, verifies webhook signature, handles user.created event, inserts into Prisma users table",
+      "expected_output": "Creates webhook route handler at app/api/webhooks/route.ts, verifies webhook signature, handles user.created event, performs idempotent Prisma write (upsert) to uniquely identify users, and durably/atomically deduplicates deliveries using Svix ID or the verified event ID",
       "files": [],
       "assertions": [
         "Creates route handler at app/api/webhooks/route.ts or similar path",
@@ -12,7 +12,9 @@
         "Uses verifyWebhook from @clerk/nextjs/webhooks for signature verification",
         "Handles user.created event type and extracts email, name, id from payload",
         "Selects the email address whose id matches primary_email_address_id and handles a missing match according to validation",
-        "Inserts into database using Prisma with the correct column mapping (clerkId = evt.data.id)",
+        "Performs an idempotent database write using Prisma upsert to uniquely identify users (clerkId = evt.data.id)",
+        "Deduplicates deliveries atomically/durably using the Svix ID (svix-id header) or the verified event ID",
+        "Requires provider-supported idempotency keys or durable outbox processing for any external notifications (such as Resend or Slack)",
         "Mentions that webhook route must be excluded from Clerk middleware (public route)"
       ]
     },
@@ -41,7 +43,9 @@
         "Uses verifyWebhook from @clerk/express/webhooks (not raw svix Webhook class)",
         "Preserves the existing route path /webhooks/clerk",
         "Mentions CLERK_WEBHOOK_SIGNING_SECRET environment variable (not legacy CLERK_WEBHOOK_SECRET)",
-        "Returns a successful HTTP 200 response, including res.json({ received: true })"
+        "Returns a successful HTTP 200 response, including res.json({ received: true })",
+        "Requires that the /webhooks/clerk route bypasses authentication middleware, distinguishing middleware authorization failures from body parsing issues",
+        "Uses Clerk webhook signature verification in place of user-session authentication"
       ]
     },
     {

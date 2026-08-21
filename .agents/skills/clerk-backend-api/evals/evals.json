@@ -26,19 +26,21 @@
         "Uses POST /v1/organizations/{id}/invitations to send the invitation",
         "Sets the role to admin (or org:admin) in the invitation payload",
         "Authenticates both API calls using CLERK_SECRET_KEY in the Authorization header",
-        "Extracts the organization ID from the first response and uses it in the invitation request"
+        "Extracts the organization ID from the first response and uses it in the invitation request",
+        "Requires explicit user confirmation before executing either write request",
+        "Validates that the required permissions are present in CLERK_BAPI_SCOPES before making API calls"
       ]
     },
     {
       "id": 3,
       "prompt": "i need to set custom metadata on a user via clerk's backend api. set their plan to 'pro' and onboarded to true",
-      "expected_output": "PATCH /v1/users/{user_id}/metadata with public_metadata or private_metadata body for deep merge, or PUT /v1/users/{user_id}/metadata for replacement, with explanation of metadata types and when to use each",
+      "expected_output": "PATCH /v1/users/{user_id}/metadata with public_metadata or private_metadata body for deep merge, or PUT /v1/users/{user_id}/metadata for replacement, with explanation of metadata types and when to use each (requiring public_metadata only when frontend read access is needed, and accepting private_metadata for backend-only data)",
       "scaffold": "nextjs-basic-auth",
       "files": [],
       "expectations": [
         "Uses PATCH /v1/users/{user_id}/metadata for metadata deep merges",
         "Uses PUT /v1/users/{user_id}/metadata for metadata replacement",
-        "Sets the metadata in the correct field: public_metadata, private_metadata, or unsafe_metadata",
+        "Requires public_metadata only when frontend read access is needed, and accepts private_metadata for backend-only data",
         "Explains the difference between metadata types (client-readable vs server-only vs client-writable)",
         "Includes a properly formed JSON body with the plan and onboarded fields",
         "Mentions checking write permissions before executing the update"

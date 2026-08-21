@@ -48,7 +48,7 @@ Force human mode with `--mode human` or `CLERK_MODE=human`. Typical AI-agent inv
 
 ## What changes in agent mode
 
-Agent mode does not treat `--yes` as human approval. For every mutation, show the exact target and `--dry-run` output, obtain explicit user approval, then run the live command. Mutations generally omit `--yes`; `clerk unlink` is the only exception and requires `--yes` to avoid a usage error.
+Agent mode does not treat `--yes` as human approval. For every mutation, require a dry-run preview, show the exact target and `--dry-run` output, obtain explicit user approval, then run the live command. Mutations generally omit `--yes`; `clerk unlink` is the only exception and requires `--yes` to avoid a usage error. `--yes` is not approval — it only suppresses the usage error for `clerk unlink`. Never pass `--yes` on other mutations expecting it to act as a safety gate; `--dry-run` is the real one.
 
 | Behavior                                                         | Human mode                                                       | Agent mode                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -76,7 +76,7 @@ Agent mode does not treat `--yes` as human approval. For every mutation, show th
 In addition, sandboxed agent-mode invocations may emit the warning above once
 per CLI invocation when a host-sensitive operation is blocked.
 
-**Rule of thumb:** always pass `--yes` for mutations and `--json` for structured output where available. Pass `--app` / `--instance` when you intentionally target a real app. Bootstrapping without authentication needs no flag at all on keyless-capable frameworks — keyless is the default; `--keyless` forces it over both a signed-in session and an existing linked profile.
+**Rule of thumb:** For mutations, require `--dry-run` preview, exact target, and explicit user approval before executing. Do not pass `--yes` as approval; it only suppresses the `unlink` usage error. Pass `--yes` only for `clerk unlink`. Pass `--json` for structured output where available. Pass `--app` / `--instance` when you intentionally target a real app. Bootstrapping without authentication needs no flag at all on keyless-capable frameworks — keyless is the default; `--keyless` forces it over both a signed-in session and an existing linked profile.
 
 ## Passing options as JSON: `--input-json`
 

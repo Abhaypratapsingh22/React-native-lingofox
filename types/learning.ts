@@ -34,7 +34,7 @@ export interface Activity {
   type: ActivityType;
   question: string;
   options?: string[]; // Used for multiple choice or word selection
-  correctAnswer: string | string[]; // Correct option index, exact text, or array of words for builder
+  correctAnswer: string | string[]; // Exact answer text or array of words
   audioUrl?: string; // Placeholder or relative path for audio playback
   explanation?: string;
 }

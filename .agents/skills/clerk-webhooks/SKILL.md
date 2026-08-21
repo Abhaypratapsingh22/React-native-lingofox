@@ -67,9 +67,17 @@ export async function POST(req: NextRequest) {
   const svixId = req.headers.get("svix-id");
   if (!svixId) return new Response("Missing svix-id", { status: 400 });
 
+  // Use the event timestamp for ordering (from Svix headers or event payload)
+  const eventTimestamp = new Date(req.headers.get("svix-timestamp") ?? Date.now());
+
   try {
     await db.$transaction(async (tx) => {
       await tx.webhookDeliveries.create({ data: { svixId } });
+
+      // Helper: only apply if incoming event is newer than stored timestamp
+      const isNewer = (existingTimestamp: Date | null) =>
+        !existingTimestamp || eventTimestamp > existingTimestamp;
+
       if (evt.type === "user.created" || evt.type === "user.updated") {
         const {
           id,
@@ -80,49 +88,114 @@ export async function POST(req: NextRequest) {
         } = evt.data;
         const email = email_addresses.find(
           (entry) => entry.id === primary_email_address_id,
-        )?.email_address;
+        )?.email_address ?? null;
         const name = `${first_name ?? ""} ${last_name ?? ""}`.trim();
-        await tx.users.upsert({
-          where: { clerkId: id },
-          create: {
-            clerkId: id,
-            email,
-            name,
-            first_name,
-            last_name,
-          },
-          update: { email, first_name, last_name, name },
-        });
+
+        // Check existing user's last event timestamp
+        const existing = await tx.users.findUnique({ where: { clerkId: id } });
+        if (isNewer(existing?.lastEventAt ?? null)) {
+          await tx.users.upsert({
+            where: { clerkId: id },
+            create: {
+              clerkId: id,
+              email,
+              name,
+              first_name,
+              last_name,
+              lastEventAt: eventTimestamp,
+              deletedAt: null,
+            },
+            update: {
+              email,
+              first_name,
+              last_name,
+              name,
+              lastEventAt: eventTimestamp,
+              deletedAt: null,
+            },
+          });
+        }
       }
-      if (evt.type === "user.deleted")
-        await tx.users.deleteMany({ where: { clerkId: evt.data.id } });
+
+      if (evt.type === "user.deleted") {
+        const clerkId = evt.data.id;
+        // Create tombstone instead of deleting — retain deletedAt timestamp
+        const existing = await tx.users.findUnique({ where: { clerkId } });
+        if (!existing || isNewer(existing.lastEventAt ?? null)) {
+          await tx.users.upsert({
+            where: { clerkId },
+            create: {
+              clerkId,
+              email: null,
+              name: null,
+              first_name: null,
+              last_name: null,
+              lastEventAt: eventTimestamp,
+              deletedAt: eventTimestamp,
+            },
+            update: {
+              lastEventAt: eventTimestamp,
+              deletedAt: eventTimestamp,
+            },
+          });
+        }
+      }
+
       if (
         evt.type === "organizationMembership.created" ||
         evt.type === "organizationMembership.updated"
       ) {
         const { organization, public_user_data, role } = evt.data;
-        await tx.teamMembers.upsert({
-          where: {
-            orgId_userId: {
-              orgId: organization.id,
-              userId: public_user_data.user_id,
+        const orgId = organization.id;
+        const userId = public_user_data.user_id;
+
+        const existing = await tx.teamMembers.findUnique({
+          where: { orgId_userId: { orgId, userId } },
+        });
+        if (isNewer(existing?.lastEventAt ?? null)) {
+          await tx.teamMembers.upsert({
+            where: { orgId_userId: { orgId, userId } },
+            create: {
+              orgId,
+              userId,
+              role,
+              lastEventAt: eventTimestamp,
+              deletedAt: null,
             },
-          },
-          create: {
-            orgId: organization.id,
-            userId: public_user_data.user_id,
-            role,
-          },
-          update: { role },
-        });
+            update: {
+              role,
+              lastEventAt: eventTimestamp,
+              deletedAt: null,
+            },
+          });
+        }
       }
-      if (evt.type === "organizationMembership.deleted")
-        await tx.teamMembers.deleteMany({
-          where: {
-            orgId: evt.data.organization.id,
-            userId: evt.data.public_user_data.user_id,
-          },
+
+      if (evt.type === "organizationMembership.deleted") {
+        const orgId = evt.data.organization.id;
+        const userId = evt.data.public_user_data.user_id;
+
+        const existing = await tx.teamMembers.findUnique({
+          where: { orgId_userId: { orgId, userId } },
         });
+        if (!existing || isNewer(existing.lastEventAt ?? null)) {
+          // Tombstone: mark deleted, don't remove
+          await tx.teamMembers.upsert({
+            where: { orgId_userId: { orgId, userId } },
+            create: {
+              orgId,
+              userId,
+              role: null,
+              lastEventAt: eventTimestamp,
+              deletedAt: eventTimestamp,
+            },
+            update: {
+              lastEventAt: eventTimestamp,
+              deletedAt: eventTimestamp,
+            },
+          });
+        }
+      }
     });
   } catch (err: any) {
     const target = err?.meta?.target;
@@ -174,7 +247,7 @@ export async function POST(req: NextRequest) {
     } = evt.data;
     const email = email_addresses.find(
       (entry) => entry.id === primary_email_address_id,
-    )?.email_address;
+    )?.email_address ?? null;
     const name = `${first_name ?? ""} ${last_name ?? ""}`.trim();
 
     const svixId = req.headers.get("svix-id");
@@ -182,24 +255,26 @@ export async function POST(req: NextRequest) {
     try {
       await db.$transaction(async (tx) => {
         await tx.webhookDeliveries.create({ data: { svixId } });
-        await tx.outbox.createMany({
-          data: [
-            {
-              key: `${svixId}:welcome-email`,
-              svixId,
-              kind: "welcome-email",
-              status: "pending",
-              payload: { email, name },
-            },
-            {
-              key: `${svixId}:slack-new-user`,
-              svixId,
-              kind: "slack-new-user",
-              status: "pending",
-              payload: { name, email },
-            },
-          ],
-        });
+        const outboxItems = [
+          {
+            key: `${svixId}:slack-new-user`,
+            svixId,
+            kind: "slack-new-user",
+            status: "pending",
+            payload: { name, email },
+          },
+        ];
+        // Only queue welcome email if we have a recipient
+        if (email) {
+          outboxItems.push({
+            key: `${svixId}:welcome-email`,
+            svixId,
+            kind: "welcome-email",
+            status: "pending",
+            payload: { email, name },
+          });
+        }
+        await tx.outbox.createMany({ data: outboxItems });
       });
     } catch (err: any) {
       const target = err?.meta?.target;
@@ -466,7 +541,7 @@ const {
 | Not authorized (401)         | Route is protected by middleware | Make route public in `clerkMiddleware()`                          |
 | No data in DB                | Async job pending                | Wait/check logs                                                   |
 | Duplicate entries            | Only handling `user.created`     | Also handle `user.updated`                                        |
-| Timeouts                     | Handler too slow                 | Queue async work, return 200 first                                |
+| Timeouts                     | Handler too slow                 | Persist event to durable queue/outbox **before** returning 2xx; return non-2xx if persistence fails so Clerk retries |
 
 ## Testing & Deployment
 

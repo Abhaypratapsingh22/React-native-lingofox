@@ -5,6 +5,7 @@ import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -21,11 +22,12 @@ export default function SignInScreen() {
   const router = useRouter();
   const clerk = useClerk();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-  const { signIn } = useSignIn();
-  const [email, setEmail] = useState("alex@gmail.com");
+  const { signIn, fetchStatus } = useSignIn();
+  const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
   const [isVerifying, setIsVerifying] = useState(false);
+  const isFetching = fetchStatus === "fetching";
 
   const handleSignIn = async () => {
     if (!signIn) return;
@@ -137,8 +139,11 @@ export default function SignInScreen() {
     }
   };
 
-  const handleSocialAuth = () => {
-    setShowVerification(true);
+  const handleComingSoonAuth = (provider: string) => {
+    Alert.alert(
+      "Coming Soon",
+      `Sign in with ${provider} is coming soon. Please use email or Google for now.`,
+    );
   };
 
   return (
@@ -206,10 +211,11 @@ export default function SignInScreen() {
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel="Sign In"
-            className="w-full bg-brand-blue h-14 rounded-2xl items-center justify-center mt-5"
+            disabled={isFetching}
+            className={`w-full h-14 rounded-2xl items-center justify-center mt-5 ${isFetching ? "bg-brand-blue/60" : "bg-brand-blue"}`}
           >
             <Text className="text-white font-poppins-semibold text-lg">
-              Sign In
+              {isFetching ? "Signing In..." : "Sign In"}
             </Text>
           </TouchableOpacity>
 
@@ -238,7 +244,7 @@ export default function SignInScreen() {
 
             {/* Facebook */}
             <TouchableOpacity
-              onPress={handleSocialAuth}
+              onPress={() => handleComingSoonAuth("Facebook")}
               activeOpacity={0.85}
               className="w-full h-13 bg-white border border-[#EFEBE4] rounded-2xl flex-row items-center justify-center gap-2.5 py-3.5"
             >
@@ -250,7 +256,7 @@ export default function SignInScreen() {
 
             {/* Apple */}
             <TouchableOpacity
-              onPress={handleSocialAuth}
+              onPress={() => handleComingSoonAuth("Apple")}
               activeOpacity={0.85}
               className="w-full h-13 bg-white border border-[#EFEBE4] rounded-2xl flex-row items-center justify-center gap-2.5 py-3.5"
             >

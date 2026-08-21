@@ -4,7 +4,7 @@ Add PostHog event tracking to the existing app using the PostHog instance alread
 
 User identification:
 
-- After Clerk authentication completes (sign-in or sign-up), call posthog.identify() with the Clerk user's id as distinctId.
+- After Clerk authentication completes (sign-in or sign-up), call posthog.reset() whenever the session is signed out or user.id changes, before identifying the next user.
 - On the first identify call after sign-up, set user properties: signup_date (current ISO date, via $set_once) and preferred_language (the language the user selected during onboarding, or null if not yet selected).
 - On every subsequent identify, update preferred_language if it has changed.
 
@@ -16,7 +16,7 @@ Three custom events, captured at these moments:
 2. lesson_started — fires when the lesson screen mounts and the user begins the lesson.
    Properties: { lesson_id: string, language: string, lesson_number: number }
 
-4. lesson_abandoned — fires when the user exits a lesson before lesson_completed fires (back navigation, screen unmount before completion).
+3. lesson_abandoned — fires when the user exits a lesson before lesson_completed fires (back navigation, screen unmount before completion).
    Properties: { lesson_id: string, time_into_lesson_seconds: number, last_question_index: number }
 
 

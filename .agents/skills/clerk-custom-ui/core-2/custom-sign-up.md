@@ -60,6 +60,25 @@ Set the active session after successful sign-up:
 await setActive({ session: signUp.createdSessionId })
 ```
 
+### Handling missing_requirements
+
+If the instance requires additional fields (e.g., username, phone number) that weren't provided during sign-up, the status will be `missing_requirements`. Render the missing fields and call `signUp.update()` before activation:
+
+```typescript
+if (result.status === 'missing_requirements') {
+  // result.missingFields contains the required fields
+  // Collect values for each missing field, then:
+  await signUp.update({
+    // Provide all required missing fields
+    username: 'chosen_username',
+    phoneNumber: '+12015551234',
+  });
+  // Then re-verify and finalize
+}
+```
+
+When the created session is pending, route through the pending-session tasks instead of assuming `setActive` completes activation.
+
 ### SSO (OAuth)
 
 ```typescript

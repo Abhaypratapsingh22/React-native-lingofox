@@ -763,7 +763,7 @@ export const vocabulary: VocabularyWord[] = [
     translation: "one",
     pronunciation: "ichi",
     partOfSpeech: "numeral",
-    exampleSentence: "りんごがいちごあります。",
+    exampleSentence: "りんごが一つあります。",
     exampleTranslation: "There is one apple.",
   },
   {
@@ -773,7 +773,7 @@ export const vocabulary: VocabularyWord[] = [
     translation: "two",
     pronunciation: "ni",
     partOfSpeech: "numeral",
-    exampleSentence: "ねこがに匹います。",
+    exampleSentence: "ねこが二匹います。",
     exampleTranslation: "There are two cats.",
   },
   {
@@ -1699,7 +1699,7 @@ export const phrases: Phrase[] = [
   {
     id: "ko-phrase-eolma-eyo",
     languageId: "ko",
-    phrase: "얼ما예요?",
+    phrase: "얼마예요?",
     translation: "How much is it?",
     context: "Asking for price.",
   },
@@ -2436,7 +2436,7 @@ export const lessons: Lesson[] = [
     type: "vocabulary-review",
     goals: ["Count 1 to 5", "Ask 'Yeh kitne ka hai?'"],
     vocabularyIds: ["hi-vocab-ek", "hi-vocab-do", "hi-vocab-teen", "hi-vocab-chaar", "hi-vocab-paanch"],
-    phraseIds: ["hi-phrase-yeh-kitne-a"],
+    phraseIds: ["hi-phrase-yeh-kitne-ka"],
     activities: [
       {
         id: "hi-l4-act1",

@@ -50,11 +50,11 @@
       "files": [],
       "expectations": [
         "Installs @clerk/react (not @clerk/nextjs or @clerk/clerk-react)",
-        "Wraps app root with ClerkProvider and passes publishableKey",
+        "Wraps app root with ClerkProvider and explicitly passes publishableKey from import.meta.env.VITE_CLERK_PUBLISHABLE_KEY",
         "Does NOT create middleware.ts or proxy.ts (not applicable to SPAs)",
         "Does NOT reference Next.js-specific patterns like server components or auth()",
         "Shows SignIn/SignUp components or redirect-based auth flow",
-        "Sets up NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY env var"
+        "Sets up VITE_CLERK_PUBLISHABLE_KEY env var"
       ]
     },
     {

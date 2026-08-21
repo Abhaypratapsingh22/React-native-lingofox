@@ -29,7 +29,15 @@ while true; do
           elif [[ "$_value" == $'\047'*$'\047' ]]; then
             _value="${_value:1:${#_value}-2}"
           fi
-          export "$_key=$_value"
+          if [[ "$_key" == "CLERK_SECRET_KEY" ]]; then
+            if [[ -z "${CLERK_SECRET_KEY+x}" ]]; then
+              export "CLERK_SECRET_KEY=$_value"
+            fi
+          elif [[ "$_key" == "CLERK_BAPI_SCOPES" ]]; then
+            if [[ -z "${CLERK_BAPI_SCOPES+x}" ]]; then
+              export "CLERK_BAPI_SCOPES=$_value"
+            fi
+          fi
         fi
       done < "$_envfile"
     fi
@@ -92,6 +100,7 @@ fi
 # Build curl command
 CURL_ARGS=(
   -s
+  --fail-with-body
   -X "$METHOD_UPPER"
   "${BASE_URL}/v1${PATH_ARG}"
   -H "Authorization: Bearer ${CLERK_SECRET_KEY:?CLERK_SECRET_KEY is not set}"
