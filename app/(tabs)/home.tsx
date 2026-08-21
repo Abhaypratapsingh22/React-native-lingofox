@@ -44,7 +44,6 @@ export default function HomeScreen() {
     toggleCompletedLesson,
     resetProgress,
     addXp,
-    setStreak,
   } = useProgressStore();
 
   // Find selected language
@@ -144,7 +143,6 @@ export default function HomeScreen() {
             <TouchableOpacity
               onPress={() => {
                 void Haptics.selectionAsync();
-                setStreak(streak + 1);
               }}
               activeOpacity={0.75}
               className="flex-row items-center bg-orange-50 px-3 py-1.5 rounded-full"
@@ -221,16 +219,25 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 onPress={() => {
-                  void Haptics.selectionAsync();
                   if (firstUncompleted) {
-                    handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
+                    if (__DEV__) {
+                      void Haptics.selectionAsync();
+                      handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
+                    }
                   }
                 }}
+                disabled={!__DEV__}
                 activeOpacity={0.85}
-                className="bg-white px-7 py-3 rounded-full mt-5 self-start shadow-sm"
+                className={`px-7 py-3 rounded-full mt-5 self-start shadow-sm ${
+                  __DEV__ ? "bg-white" : "bg-white/20"
+                }`}
               >
-                <Text className="font-poppins-bold text-sm text-[#4F46E5]">
-                  Continue
+                <Text
+                  className={`font-poppins-bold text-sm ${
+                    __DEV__ ? "text-[#4F46E5]" : "text-white/60"
+                  }`}
+                >
+                  {__DEV__ ? "Complete Lesson (Dev)" : "Locked"}
                 </Text>
               </TouchableOpacity>
             </View>
