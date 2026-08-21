@@ -6,26 +6,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { languages } from "@/data/languages";
 import { images } from "@/constants/images";
 
-import { useAuth } from "@clerk/expo";
+import { useLanguageStore } from "@/store/useLanguageStore";
 
 export default function LanguageSelectionScreen() {
   const router = useRouter();
-  const { isSignedIn, isLoaded } = useAuth();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  if (!isLoaded) return null;
-  if (!isSignedIn) {
-    router.replace("/(auth)/sign-in");
-    return null;
-  }
+  const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const setSelectedLanguageId = useLanguageStore((state) => state.setSelectedLanguageId);
+  const [selectedId, setSelectedId] = useState<string | null>(selectedLanguageId);
 
   const handleConfirm = () => {
     if (selectedId) {
-      // Zustand store persistence will be handled in the next prompt (08-zustand.md)
-      // For now, redirecting to home screen
+      setSelectedLanguageId(selectedId);
       router.replace("/");
     }
   };
+
 
   return (
     <SafeAreaView style={styles.container}>
