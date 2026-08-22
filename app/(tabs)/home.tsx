@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  AppState,
   DimensionValue,
   Image,
   ScrollView,
@@ -13,6 +14,8 @@ import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useIsFocused } from "@react-navigation/native";
+
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { useProgressStore } from "@/store/useProgressStore";
@@ -35,12 +38,14 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
 
+
   // Zustand State
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const languageStoreHydrated = useLanguageStore((state) => state.hasHydrated);
   const {
     completedLessons,
-    xp,
+    dailyXp,
+    checkDailyXpReset,
     streak,
     toggleCompletedLesson,
     resetProgress,
@@ -49,6 +54,37 @@ export default function HomeScreen() {
   } = useProgressStore();
 
   const isHydrated = languageStoreHydrated && progressStoreHydrated;
+  const isFocused = useIsFocused();
+  const lastResetRef = React.useRef<number>(0);
+
+  const triggerReset = React.useCallback(() => {
+    const now = Date.now();
+    // Avoid running within 1 second of the last run to prevent duplicates on single activation
+    if (now - lastResetRef.current > 1000) {
+      lastResetRef.current = now;
+      checkDailyXpReset();
+    }
+  }, [checkDailyXpReset]);
+
+  React.useEffect(() => {
+    if (!isHydrated || !isFocused) {
+      return;
+    }
+
+    // Trigger on initial hydration or when screen gains focus
+    triggerReset();
+
+    // Trigger when app returns to foreground
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        triggerReset();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isHydrated, isFocused, triggerReset]);
 
   // Find selected language
   const selectedLanguage =
@@ -67,9 +103,9 @@ export default function HomeScreen() {
   // Compute lesson states
   const firstUncompleted = sortedLessons.find((l) => !completedLessons.includes(l.id));
 
-  // Total XP Specs (Target: 20)
-  const totalXpTarget = 20;
-  const progressRatio = Math.min(1, xp / totalXpTarget);
+  // Daily Goal Specs (XP Target: 20)
+  const dailyGoalXp = 20;
+  const progressRatio = Math.min(1, dailyXp / dailyGoalXp);
   const progressPercentage = `${progressRatio * 100}%` as DimensionValue;
 
   // Get clerk user name greeting
@@ -111,6 +147,7 @@ export default function HomeScreen() {
       return;
     }
     void Haptics.selectionAsync();
+
     router.push(`/lesson/${lessonId}` as any);
   };
 
@@ -178,14 +215,14 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 <Text className="font-poppins-medium text-sm text-[#64748B]">
-                  Total XP
+                  Daily goal
                 </Text>
                 <View className="flex-row items-baseline mt-1">
                   <Text className="font-poppins-bold text-[28px] text-text-primary">
-                    {xp}
+                    {dailyXp}
                   </Text>
                   <Text className="font-poppins text-base text-[#64748B] ml-1">
-                    / {totalXpTarget} XP
+                    / {dailyGoalXp} XP
                   </Text>
                 </View>
               </View>

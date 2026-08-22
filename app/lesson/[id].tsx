@@ -1,25 +1,25 @@
-import React, { useState, useRef, useEffect } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  Modal,
-  StyleSheet,
-  ActivityIndicator,
-  ScrollView,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { useUser } from "@clerk/expo";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { usePostHog } from "posthog-react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useProgressStore } from "@/store/useProgressStore";
-import { lessons, phrases, vocabulary } from "@/data/lessons";
-import { languages } from "@/data/languages";
 import { images } from "@/constants/images";
+import { languages } from "@/data/languages";
+import { lessons, phrases, vocabulary } from "@/data/lessons";
+import { useProgressStore } from "@/store/useProgressStore";
 
 interface DialogueTurn {
   teacherText: string;
@@ -550,9 +550,8 @@ export default function AudioLessonScreen() {
                   void Haptics.selectionAsync();
                   setIsCameraOn((prev) => !prev);
                 }}
-                className={`w-12 h-12 rounded-full items-center justify-center ${
-                  isCameraOn ? "bg-white" : "bg-slate-800"
-                }`}
+                className={`w-12 h-12 rounded-full items-center justify-center ${isCameraOn ? "bg-white" : "bg-slate-800"
+                  }`}
                 activeOpacity={0.8}
               >
                 <Ionicons
@@ -571,9 +570,8 @@ export default function AudioLessonScreen() {
                   void Haptics.selectionAsync();
                   setIsMuted((prev) => !prev);
                 }}
-                className={`w-12 h-12 rounded-full items-center justify-center ${
-                  !isMuted ? "bg-white" : "bg-slate-800"
-                }`}
+                className={`w-12 h-12 rounded-full items-center justify-center ${!isMuted ? "bg-white" : "bg-slate-800"
+                  }`}
                 activeOpacity={0.8}
               >
                 <Ionicons
@@ -592,9 +590,8 @@ export default function AudioLessonScreen() {
                   void Haptics.selectionAsync();
                   setShowSubtitles((prev) => !prev);
                 }}
-                className={`w-12 h-12 rounded-full items-center justify-center ${
-                  showSubtitles ? "bg-white" : "bg-slate-800"
-                }`}
+                className={`w-12 h-12 rounded-full items-center justify-center ${showSubtitles ? "bg-white" : "bg-slate-800"
+                  }`}
                 activeOpacity={0.8}
               >
                 <Ionicons
@@ -654,13 +651,12 @@ export default function AudioLessonScreen() {
           <TouchableOpacity
             onPress={currentTurnIndex === dialogueTurns.length - 1 ? handleEndCall : handleSpeak}
             disabled={isListening || isMuted || isTeacherSpeaking}
-            className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${
-              isMuted
+            className={`w-full py-4 rounded-2xl flex-row items-center justify-center ${isMuted
                 ? "bg-slate-100 border border-slate-200"
                 : isListening
-                ? "bg-[#8B5CF6]"
-                : "bg-brand-blue"
-            }`}
+                  ? "bg-[#8B5CF6]"
+                  : "bg-brand-blue"
+              }`}
             activeOpacity={0.8}
           >
             <Ionicons
@@ -670,19 +666,18 @@ export default function AudioLessonScreen() {
               style={{ marginRight: 8 }}
             />
             <Text
-              className={`font-poppins-bold text-sm ${
-                isMuted ? "text-[#94A3B8]" : "text-white"
-              }`}
+              className={`font-poppins-bold text-sm ${isMuted ? "text-[#94A3B8]" : "text-white"
+                }`}
             >
               {isMuted
                 ? "Unmute Mic to Respond"
                 : isListening
-                ? "Listening... Speak Now 🎙"
-                : isTeacherSpeaking
-                ? "Teacher is speaking..."
-                : currentTurnIndex < dialogueTurns.length - 1
-                ? currentTurn.userPromptText
-                : "Tap to Finish Lesson"}
+                  ? "Listening... Speak Now 🎙"
+                  : isTeacherSpeaking
+                    ? "Teacher is speaking..."
+                    : currentTurnIndex < dialogueTurns.length - 1
+                      ? currentTurn.userPromptText
+                      : "Tap to Finish Lesson"}
             </Text>
           </TouchableOpacity>
         </View>

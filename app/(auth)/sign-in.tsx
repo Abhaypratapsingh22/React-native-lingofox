@@ -65,8 +65,7 @@ export default function SignInScreen() {
       setShowVerification(false);
       console.warn(
         "Email sign-in dispatch error:",
-        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
-        err?.code || err?.errors?.[0]?.code
+        JSON.stringify(err, null, 2)
       );
     }
   };
@@ -101,11 +100,7 @@ export default function SignInScreen() {
         "Invalid verification code. Please try again.";
 
       setVerificationError(message);
-      console.warn(
-        "Email verification error:",
-        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
-        err?.code || err?.errors?.[0]?.code
-      );
+      console.warn("Email verification error:", JSON.stringify(err, null, 2));
     } finally {
       setIsVerifying(false);
     }
@@ -135,8 +130,7 @@ export default function SignInScreen() {
       setVerificationError(message);
       console.warn(
         "Resend email verification error:",
-        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
-        err?.code || err?.errors?.[0]?.code
+        JSON.stringify(err, null, 2)
       );
     }
   };
@@ -153,11 +147,7 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       if (err?.code === "SIGN_IN_CANCELLED" || err?.code === "-5") return;
-      console.warn(
-        "Google OAuth error:",
-        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
-        err?.code || err?.errors?.[0]?.code
-      );
+      console.warn("Google OAuth error:", JSON.stringify(err, null, 2));
     }
   };
 
