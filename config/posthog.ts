@@ -3,7 +3,11 @@ import PostHog from 'posthog-react-native'
 // Configuration loaded from environment variables (EXPO_PUBLIC_ prefix embeds them at build time)
 const projectToken = process.env.EXPO_PUBLIC_POSTHOG_PROJECT_TOKEN as string | undefined
 const host = (process.env.EXPO_PUBLIC_POSTHOG_HOST as string) || 'https://us.i.posthog.com'
-const isPostHogConfigured = Boolean(projectToken && projectToken !== 'phc_your_project_token_here')
+const isPostHogConfigured = Boolean(
+  projectToken &&
+    projectToken !== 'phc_your_project_token_here' &&
+    projectToken !== 'your_posthog_project_token_here'
+)
 
 if (__DEV__ && !isPostHogConfigured) {
   console.warn(

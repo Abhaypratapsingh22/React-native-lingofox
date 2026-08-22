@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { languages } from "@/data/languages";
@@ -15,6 +15,12 @@ export default function LanguageSelectionScreen() {
   const setSelectedLanguageId = useLanguageStore((state) => state.setSelectedLanguageId);
   const posthog = usePostHog();
   const [selectedId, setSelectedId] = useState<string | null>(selectedLanguageId);
+
+  useEffect(() => {
+    if (selectedLanguageId) {
+      setSelectedId(selectedLanguageId);
+    }
+  }, [selectedLanguageId]);
 
   const handleConfirm = () => {
     if (selectedId) {

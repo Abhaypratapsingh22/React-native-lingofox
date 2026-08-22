@@ -85,13 +85,13 @@ export default function SignUpScreen() {
       }
 
       if (signUp.status === "complete") {
-        posthog.capture('sign_up_completed', { method: 'email' });
         await signUp.finalize({
           navigate: ({ session }) => {
             if (session?.currentTask) return;
             router.replace("/");
           },
         });
+        posthog.capture('sign_up_completed', { method: 'email' });
       } else {
         setVerificationError(`Sign-up status is incomplete: ${signUp.status}`);
       }

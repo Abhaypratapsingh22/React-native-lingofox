@@ -83,6 +83,14 @@ export function VerificationModal({
     }
   };
 
+  const handleClose = () => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+    onClose();
+  };
+
   const handleResend = async () => {
     setCode("");
     if (onResend) {
@@ -100,14 +108,14 @@ export function VerificationModal({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         behavior="padding"
         style={styles.overlay}
         keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
       >
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Pressable style={styles.backdrop} onPress={handleClose} />
 
         <View className="w-full max-w-sm px-4">
           <View
@@ -116,7 +124,7 @@ export function VerificationModal({
           >
             {/* Close Button */}
             <TouchableOpacity
-              onPress={onClose}
+              onPress={handleClose}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Close verification"

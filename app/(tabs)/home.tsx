@@ -13,7 +13,6 @@ import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { useProgressStore } from "@/store/useProgressStore";
@@ -35,7 +34,6 @@ const GREETINGS: Record<string, string> = {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
-  const posthog = usePostHog();
 
   // Zustand State
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
@@ -69,9 +67,9 @@ export default function HomeScreen() {
   // Compute lesson states
   const firstUncompleted = sortedLessons.find((l) => !completedLessons.includes(l.id));
 
-  // Daily Goal Specs (XP Target: 20)
-  const dailyGoalXp = 20;
-  const progressRatio = Math.min(1, xp / dailyGoalXp);
+  // Total XP Specs (Target: 20)
+  const totalXpTarget = 20;
+  const progressRatio = Math.min(1, xp / totalXpTarget);
   const progressPercentage = `${progressRatio * 100}%` as DimensionValue;
 
   // Get clerk user name greeting
@@ -113,28 +111,7 @@ export default function HomeScreen() {
       return;
     }
     void Haptics.selectionAsync();
-    const lesson = sortedLessons.find((l) => l.id === lessonId);
-    const isAlreadyCompleted = completedLessons.includes(lessonId);
-    if (isAlreadyCompleted) {
-      // Toggling off — no meaningful event to send
-    } else {
-      posthog.capture('lesson_started', {
-        lesson_id: lessonId,
-        lesson_type: lesson?.type ?? null,
-        language_id: selectedLanguageId,
-        xp_reward: xpReward,
-      });
-      posthog.capture('lesson_completed', {
-        lesson_id: lessonId,
-        lesson_type: lesson?.type ?? null,
-        language_id: selectedLanguageId,
-        xp_earned: xpReward,
-        total_xp_after: xp + xpReward,
-        streak: streak,
-      });
-    }
-    // Toggle completion on click for interactive learning UI demo
-    toggleCompletedLesson(lessonId, xpReward);
+    router.push(`/lesson/${lessonId}` as any);
   };
 
   return (
@@ -201,14 +178,14 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-1">
                 <Text className="font-poppins-medium text-sm text-[#64748B]">
-                  Daily goal
+                  Total XP
                 </Text>
                 <View className="flex-row items-baseline mt-1">
                   <Text className="font-poppins-bold text-[28px] text-text-primary">
                     {xp}
                   </Text>
                   <Text className="font-poppins text-base text-[#64748B] ml-1">
-                    / {dailyGoalXp} XP
+                    / {totalXpTarget} XP
                   </Text>
                 </View>
               </View>
@@ -248,24 +225,22 @@ export default function HomeScreen() {
                 onPress={() => {
                   if (!isHydrated) return;
                   if (firstUncompleted) {
-                    if (__DEV__) {
-                      void Haptics.selectionAsync();
-                      handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
-                    }
+                    void Haptics.selectionAsync();
+                    handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
                   }
                 }}
-                disabled={!isHydrated || !__DEV__}
+                disabled={!isHydrated}
                 activeOpacity={0.85}
                 className={`px-7 py-3 rounded-full mt-5 self-start shadow-sm ${
-                  isHydrated && __DEV__ ? "bg-white" : "bg-white/20"
+                  isHydrated ? "bg-white" : "bg-white/20"
                 }`}
               >
                 <Text
                   className={`font-poppins-bold text-sm ${
-                    isHydrated && __DEV__ ? "text-[#4F46E5]" : "text-white/60"
+                    isHydrated ? "text-[#4F46E5]" : "text-white/60"
                   }`}
                 >
-                  {isHydrated && __DEV__ ? "Complete Lesson (Dev)" : !isHydrated ? "Loading..." : "Locked"}
+                  {isHydrated ? "Continue Learning" : "Loading..."}
                 </Text>
               </TouchableOpacity>
             </View>

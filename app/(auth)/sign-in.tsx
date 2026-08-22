@@ -29,12 +29,14 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
+  const [generalError, setGeneralError] = useState<string>();
   const [isVerifying, setIsVerifying] = useState(false);
   const isFetching = fetchStatus === "fetching";
 
   const handleSignIn = async () => {
     if (!signIn) return;
     if (!email.trim()) return;
+    setGeneralError(undefined);
 
     try {
       const createResult = await signIn.create({ identifier: email });
@@ -59,10 +61,12 @@ export default function SignInScreen() {
         "Unable to send the sign-in verification code. Please try again.";
 
       setVerificationError(message);
+      setGeneralError(message);
       setShowVerification(false);
       console.warn(
         "Email sign-in dispatch error:",
-        JSON.stringify(err, null, 2),
+        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
+        err?.code || err?.errors?.[0]?.code
       );
     }
   };
@@ -87,6 +91,8 @@ export default function SignInScreen() {
         await clerk.setActive({ session: signIn.createdSessionId });
         posthog.capture('sign_in_completed', { method: 'email' });
         router.replace("/");
+      } else {
+        setVerificationError("Verification succeeded but no session ID was returned. Please try again.");
       }
     } catch (err: any) {
       const message =
@@ -95,7 +101,11 @@ export default function SignInScreen() {
         "Invalid verification code. Please try again.";
 
       setVerificationError(message);
-      console.warn("Email verification error:", JSON.stringify(err, null, 2));
+      console.warn(
+        "Email verification error:",
+        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
+        err?.code || err?.errors?.[0]?.code
+      );
     } finally {
       setIsVerifying(false);
     }
@@ -125,7 +135,8 @@ export default function SignInScreen() {
       setVerificationError(message);
       console.warn(
         "Resend email verification error:",
-        JSON.stringify(err, null, 2),
+        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
+        err?.code || err?.errors?.[0]?.code
       );
     }
   };
@@ -142,7 +153,11 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       if (err?.code === "SIGN_IN_CANCELLED" || err?.code === "-5") return;
-      console.warn("Google OAuth error:", JSON.stringify(err, null, 2));
+      console.warn(
+        "Google OAuth error:",
+        err?.message || err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
+        err?.code || err?.errors?.[0]?.code
+      );
     }
   };
 
@@ -211,6 +226,12 @@ export default function SignInScreen() {
               />
             </View>
           </View>
+
+          {generalError && (
+            <Text className="font-poppins text-xs text-red-500 mt-2 ml-1 text-center">
+              {generalError}
+            </Text>
+          )}
 
           {/* Sign In CTA Button */}
           <TouchableOpacity
