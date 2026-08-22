@@ -67,15 +67,17 @@ export function VerificationModal({
   }, [error]);
 
   const handleCodeChange = (text: string) => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+
     // Only allow numeric digits up to 6 characters
     const numericText = text.replace(/[^0-9]/g, "").slice(0, 6);
     setCode(numericText);
 
     // When 6th digit is entered, trigger verification
     if (numericText.length === 6 && onVerify) {
-      if (verifyTimerRef.current) {
-        clearTimeout(verifyTimerRef.current);
-      }
       verifyTimerRef.current = setTimeout(() => {
         verifyTimerRef.current = null;
         void onVerify(numericText);
@@ -92,6 +94,10 @@ export function VerificationModal({
   };
 
   const handleResend = async () => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
     setCode("");
     if (onResend) {
       await onResend();

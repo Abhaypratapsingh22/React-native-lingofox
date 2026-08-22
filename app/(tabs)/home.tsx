@@ -15,7 +15,7 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useIsFocused } from "@react-navigation/native";
-
+import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { useProgressStore } from "@/store/useProgressStore";
@@ -37,7 +37,7 @@ const GREETINGS: Record<string, string> = {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
-
+  const posthog = usePostHog();
 
   // Zustand State
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
@@ -147,6 +147,17 @@ export default function HomeScreen() {
       return;
     }
     void Haptics.selectionAsync();
+
+    const lesson = sortedLessons.find((l) => l.id === lessonId);
+    const isAlreadyCompleted = completedLessons.includes(lessonId);
+    if (!isAlreadyCompleted) {
+      posthog.capture('lesson_started', {
+        lesson_id: lessonId,
+        lesson_type: lesson?.type ?? null,
+        language_id: selectedLanguageId,
+        xp_reward: xpReward,
+      });
+    }
 
     router.push(`/lesson/${lessonId}` as any);
   };

@@ -7,6 +7,7 @@ import { useEffect, useRef } from "react";
 import "../global.css";
 import { fonts } from "../theme/tokens";
 import { useLanguageStore } from "../store/useLanguageStore";
+import { useProgressStore } from "../store/useProgressStore";
 import { PostHogProvider } from "posthog-react-native";
 import { posthog } from "../config/posthog";
 
@@ -43,6 +44,17 @@ function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; font
       posthog.reset();
     }
   }, [isSignedIn, user, isAuthLoaded]);
+
+  // Scope progress store to Clerk user ID
+  useEffect(() => {
+    if (isAuthLoaded) {
+      if (isSignedIn && user?.id) {
+        useProgressStore.getState().setUserId(user.id);
+      } else {
+        useProgressStore.getState().setUserId(null);
+      }
+    }
+  }, [isSignedIn, user?.id, isAuthLoaded]);
 
   // Manual screen tracking for Expo Router
   useEffect(() => {

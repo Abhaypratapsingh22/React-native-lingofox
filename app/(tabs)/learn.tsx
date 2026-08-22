@@ -71,6 +71,19 @@ export default function LearnScreen() {
     router.push(`/lesson/${lessonId}` as any);
   };
 
+  // Prevent fallback language from flashing before hydration completes
+  if (!isHydrated) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View className="flex-1 items-center justify-center p-6">
+          <Text className="font-poppins-semibold text-base text-text-secondary text-center">
+            Loading...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* HEADER */}
