@@ -13,6 +13,7 @@ import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { useProgressStore } from "@/store/useProgressStore";
@@ -34,9 +35,11 @@ const GREETINGS: Record<string, string> = {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
+  const posthog = usePostHog();
 
   // Zustand State
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
+  const languageStoreHydrated = useLanguageStore((state) => state.hasHydrated);
   const {
     completedLessons,
     xp,
@@ -44,7 +47,10 @@ export default function HomeScreen() {
     toggleCompletedLesson,
     resetProgress,
     addXp,
+    hasHydrated: progressStoreHydrated,
   } = useProgressStore();
+
+  const isHydrated = languageStoreHydrated && progressStoreHydrated;
 
   // Find selected language
   const selectedLanguage =
@@ -101,11 +107,32 @@ export default function HomeScreen() {
   };
 
   const handleLessonClick = (lessonId: string, xpReward: number, isLocked: boolean) => {
+    if (!isHydrated) return;
     if (isLocked) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     void Haptics.selectionAsync();
+    const lesson = sortedLessons.find((l) => l.id === lessonId);
+    const isAlreadyCompleted = completedLessons.includes(lessonId);
+    if (isAlreadyCompleted) {
+      // Toggling off — no meaningful event to send
+    } else {
+      posthog.capture('lesson_started', {
+        lesson_id: lessonId,
+        lesson_type: lesson?.type ?? null,
+        language_id: selectedLanguageId,
+        xp_reward: xpReward,
+      });
+      posthog.capture('lesson_completed', {
+        lesson_id: lessonId,
+        lesson_type: lesson?.type ?? null,
+        language_id: selectedLanguageId,
+        xp_earned: xpReward,
+        total_xp_after: xp + xpReward,
+        streak: streak,
+      });
+    }
     // Toggle completion on click for interactive learning UI demo
     toggleCompletedLesson(lessonId, xpReward);
   };
@@ -219,6 +246,7 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 onPress={() => {
+                  if (!isHydrated) return;
                   if (firstUncompleted) {
                     if (__DEV__) {
                       void Haptics.selectionAsync();
@@ -226,18 +254,18 @@ export default function HomeScreen() {
                     }
                   }
                 }}
-                disabled={!__DEV__}
+                disabled={!isHydrated || !__DEV__}
                 activeOpacity={0.85}
                 className={`px-7 py-3 rounded-full mt-5 self-start shadow-sm ${
-                  __DEV__ ? "bg-white" : "bg-white/20"
+                  isHydrated && __DEV__ ? "bg-white" : "bg-white/20"
                 }`}
               >
                 <Text
                   className={`font-poppins-bold text-sm ${
-                    __DEV__ ? "text-[#4F46E5]" : "text-white/60"
+                    isHydrated && __DEV__ ? "text-[#4F46E5]" : "text-white/60"
                   }`}
                 >
-                  {__DEV__ ? "Complete Lesson (Dev)" : "Locked"}
+                  {isHydrated && __DEV__ ? "Complete Lesson (Dev)" : !isHydrated ? "Loading..." : "Locked"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -343,10 +371,14 @@ export default function HomeScreen() {
             <View className="flex-row flex-wrap gap-2">
               <TouchableOpacity
                 onPress={() => {
+                  if (!isHydrated) return;
                   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   addXp(5);
                 }}
-                className="px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl"
+                disabled={!isHydrated}
+                className={`px-3 py-2 bg-blue-50 border border-blue-100 rounded-xl ${
+                  !isHydrated ? "opacity-40" : ""
+                }`}
               >
                 <Text className="font-poppins-semibold text-xs text-[#0066FF]">
                   +5 XP
@@ -355,12 +387,16 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 onPress={() => {
+                  if (!isHydrated) return;
                   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   if (firstUncompleted) {
                     toggleCompletedLesson(firstUncompleted.id, firstUncompleted.xp);
                   }
                 }}
-                className="px-3 py-2 bg-[#F5F3FF] border border-[#EEF2F6] rounded-xl"
+                disabled={!isHydrated}
+                className={`px-3 py-2 bg-[#F5F3FF] border border-[#EEF2F6] rounded-xl ${
+                  !isHydrated ? "opacity-40" : ""
+                }`}
               >
                 <Text className="font-poppins-semibold text-xs text-[#8B5CF6]">
                   Complete Next Lesson
@@ -369,10 +405,14 @@ export default function HomeScreen() {
 
               <TouchableOpacity
                 onPress={() => {
+                  if (!isHydrated) return;
                   void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
                   resetProgress();
                 }}
-                className="px-3 py-2 bg-red-50 border border-red-100 rounded-xl"
+                disabled={!isHydrated}
+                className={`px-3 py-2 bg-red-50 border border-red-100 rounded-xl ${
+                  !isHydrated ? "opacity-40" : ""
+                }`}
               >
                 <Text className="font-poppins-semibold text-xs text-red-600">
                   Reset Progress
