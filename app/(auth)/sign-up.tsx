@@ -4,6 +4,7 @@ import { useSignUp, useSSO } from "@clerk/expo";
 import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { usePostHog } from "posthog-react-native";
 import {
     Alert,
     Image,
@@ -22,6 +23,8 @@ export default function SignUpScreen() {
   const router = useRouter();
   const { signUp, errors, fetchStatus } = useSignUp();
   const { startSSOFlow } = useSSO();
+
+  const posthog = usePostHog();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +54,7 @@ export default function SignUpScreen() {
         throw codeResult.error;
       }
 
+      posthog.capture('sign_up_submitted', { method: 'email' });
       setShowVerification(true);
     } catch (err: any) {
       const message =
@@ -81,6 +85,7 @@ export default function SignUpScreen() {
       }
 
       if (signUp.status === "complete") {
+        posthog.capture('sign_up_completed', { method: 'email' });
         await signUp.finalize({
           navigate: ({ session }) => {
             if (session?.currentTask) return;
@@ -122,12 +127,14 @@ export default function SignUpScreen() {
 
   const handleGoogleAuth = async () => {
     try {
+      posthog.capture('sign_up_submitted', { method: 'google' });
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy: "oauth_google",
       });
 
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
+        posthog.capture('sign_up_completed', { method: 'google' });
         router.replace("/");
       }
     } catch (err: any) {

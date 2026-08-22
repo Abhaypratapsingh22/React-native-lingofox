@@ -4,6 +4,7 @@ import { useClerk, useOAuth, useSignIn } from "@clerk/expo";
 import { AntDesign, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { usePostHog } from "posthog-react-native";
 import {
   Alert,
   Image,
@@ -23,6 +24,8 @@ export default function SignInScreen() {
   const clerk = useClerk();
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
   const { signIn, fetchStatus } = useSignIn();
+  const posthog = usePostHog();
+
   const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
@@ -46,6 +49,7 @@ export default function SignInScreen() {
         throw sendCodeResult.error;
       }
 
+      posthog.capture('sign_in_submitted', { method: 'email' });
       setVerificationError(undefined);
       setShowVerification(true);
     } catch (err: any) {
@@ -81,6 +85,7 @@ export default function SignInScreen() {
 
       if (signIn.createdSessionId) {
         await clerk.setActive({ session: signIn.createdSessionId });
+        posthog.capture('sign_in_completed', { method: 'email' });
         router.replace("/");
       }
     } catch (err: any) {
@@ -127,10 +132,12 @@ export default function SignInScreen() {
 
   const handleGoogleAuth = async () => {
     try {
+      posthog.capture('sign_in_submitted', { method: 'google' });
       const { createdSessionId, setActive } = await startOAuthFlow();
 
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
+        posthog.capture('sign_in_completed', { method: 'google' });
         router.replace("/");
       }
     } catch (err: any) {

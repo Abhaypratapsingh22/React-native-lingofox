@@ -5,6 +5,7 @@ import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { languages } from "@/data/languages";
 import { images } from "@/constants/images";
+import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 
@@ -12,10 +13,16 @@ export default function LanguageSelectionScreen() {
   const router = useRouter();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const setSelectedLanguageId = useLanguageStore((state) => state.setSelectedLanguageId);
+  const posthog = usePostHog();
   const [selectedId, setSelectedId] = useState<string | null>(selectedLanguageId);
 
   const handleConfirm = () => {
     if (selectedId) {
+      const selectedLang = languages.find((l) => l.id === selectedId);
+      posthog.capture('language_selected', {
+        language_id: selectedId,
+        language_name: selectedLang?.name ?? null,
+      });
       setSelectedLanguageId(selectedId);
       router.replace("/");
     }

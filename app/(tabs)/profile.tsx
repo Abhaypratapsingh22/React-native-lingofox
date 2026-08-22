@@ -6,12 +6,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { languages } from "@/data/languages";
 import { Ionicons } from "@expo/vector-icons";
+import { usePostHog } from "posthog-react-native";
 
 export default function ProfileScreen() {
   const { signOut } = useAuth();
   const { user } = useUser();
   const router = useRouter();
 
+  const posthog = usePostHog();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const setSelectedLanguageId = useLanguageStore((state) => state.setSelectedLanguageId);
 
@@ -19,6 +21,7 @@ export default function ProfileScreen() {
 
   const handleSignOut = async () => {
     try {
+      posthog.capture('sign_out');
       await signOut();
     } catch (error) {
       console.warn("Sign out error:", error);
