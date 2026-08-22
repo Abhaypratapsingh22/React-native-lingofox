@@ -3,11 +3,15 @@ import { useRouter } from "expo-router";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "@/constants/images";
+import { usePostHog } from "posthog-react-native";
 
 export default function OnboardingScreen() {
   const router = useRouter();
 
+  const posthog = usePostHog();
+
   const handleGetStarted = () => {
+    posthog.capture('get_started_tapped');
     router.push("/(auth)/sign-up");
   };
 

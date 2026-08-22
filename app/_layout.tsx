@@ -1,12 +1,14 @@
-import { ClerkProvider, useAuth } from "@clerk/expo";
+import { ClerkProvider, useAuth, useUser } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments } from "expo-router";
+import { Stack, usePathname, useGlobalSearchParams, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "../global.css";
 import { fonts } from "../theme/tokens";
 import { useLanguageStore } from "../store/useLanguageStore";
+import { PostHogProvider } from "posthog-react-native";
+import { posthog } from "../config/posthog";
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +22,38 @@ if (!publishableKey) {
 
 function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; fontsError: any }) {
   const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
+  const { user } = useUser();
+  const pathname = usePathname();
+  const params = useGlobalSearchParams();
+  const previousPathname = useRef<string | undefined>(undefined);
+
+  // Identify authenticated users in PostHog
+  useEffect(() => {
+    if (isSignedIn && user) {
+      posthog.identify(user.id, {
+        $set: {
+          email: user.primaryEmailAddress?.emailAddress ?? null,
+          name: user.fullName ?? user.firstName ?? null,
+        },
+        $set_once: {
+          first_seen_at: new Date().toISOString(),
+        },
+      });
+    } else if (isAuthLoaded && !isSignedIn) {
+      posthog.reset();
+    }
+  }, [isSignedIn, user, isAuthLoaded]);
+
+  // Manual screen tracking for Expo Router
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      posthog.screen(pathname, {
+        previous_screen: previousPathname.current ?? null,
+        ...params,
+      });
+      previousPathname.current = pathname;
+    }
+  }, [pathname, params]);
   const segments = useSegments() as string[];
   const router = useRouter();
   const hasHydrated = useLanguageStore((state) => state.hasHydrated);
@@ -78,7 +112,16 @@ export default function RootLayout() {
 
   return (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <InitialLayout fontsLoaded={loaded} fontsError={error} />
+      <PostHogProvider
+        client={posthog}
+        autocapture={{
+          captureScreens: false, // Manual screen tracking via usePathname
+          captureTouches: true,
+          propsToCapture: ["testID"],
+        }}
+      >
+        <InitialLayout fontsLoaded={loaded} fontsError={error} />
+      </PostHogProvider>
     </ClerkProvider>
   );
 }
