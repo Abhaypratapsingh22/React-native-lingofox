@@ -107,19 +107,37 @@ export const useProgressStore = create<ProgressState>()(
                 streak: savedProgress.streak,
               };
             } else {
-              // New user: adopt current progress as starting point (e.g. onboarding stats)
-              const currentProgress: UserProgress = {
-                completedLessons: state.completedLessons,
-                xp: state.xp,
-                dailyXp: state.dailyXp,
-                dailyXpDate: state.dailyXpDate,
-                streak: state.streak,
-              };
-              userProgressMap[newUserId] = currentProgress;
-              return {
-                userId: newUserId,
-                userProgressMap,
-              };
+              // New user with no saved progress
+              if (!oldUserId) {
+                // Anonymous onboarding → first sign-in: carry over current progress
+                const currentProgress: UserProgress = {
+                  completedLessons: state.completedLessons,
+                  xp: state.xp,
+                  dailyXp: state.dailyXp,
+                  dailyXpDate: state.dailyXpDate,
+                  streak: state.streak,
+                };
+                userProgressMap[newUserId] = currentProgress;
+                return {
+                  userId: newUserId,
+                  userProgressMap,
+                };
+              } else {
+                // Switching from another real user: initialize fresh defaults
+                const defaultProgress: UserProgress = {
+                  completedLessons: [],
+                  xp: 15,
+                  dailyXp: 15,
+                  dailyXpDate: getLocalDateString(),
+                  streak: 12,
+                };
+                userProgressMap[newUserId] = defaultProgress;
+                return {
+                  userId: newUserId,
+                  userProgressMap,
+                  ...defaultProgress,
+                };
+              }
             }
           } else {
             // Sign out: reset current progress to defaults

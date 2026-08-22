@@ -46,15 +46,16 @@ function InitialLayout({ fontsLoaded, fontsError }: { fontsLoaded: boolean; font
   }, [isSignedIn, user, isAuthLoaded]);
 
   // Scope progress store to Clerk user ID
+  const progressHydrated = useProgressStore((s) => s.hasHydrated);
   useEffect(() => {
-    if (isAuthLoaded) {
+    if (isAuthLoaded && progressHydrated) {
       if (isSignedIn && user?.id) {
         useProgressStore.getState().setUserId(user.id);
       } else {
         useProgressStore.getState().setUserId(null);
       }
     }
-  }, [isSignedIn, user?.id, isAuthLoaded]);
+  }, [isSignedIn, user?.id, isAuthLoaded, progressHydrated]);
 
   // Manual screen tracking for Expo Router
   useEffect(() => {

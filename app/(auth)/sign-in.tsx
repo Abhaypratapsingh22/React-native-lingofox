@@ -89,14 +89,7 @@ export default function SignInScreen() {
 
       if (signIn.createdSessionId) {
         posthog.capture('sign_in_completed', { method: 'email' });
-        
-        // Handle currentTask if it exists
-        if (clerk.session?.currentTask) {
-          // Route to task screen if needed, otherwise fallback to "/"
-          router.replace("/");
-        } else {
-          router.replace("/");
-        }
+        router.replace("/");
       } else {
         setVerificationError("Verification succeeded but no session ID was returned. Please try again.");
       }
