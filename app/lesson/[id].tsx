@@ -57,6 +57,7 @@ export default function AudioLessonScreen() {
 
   // Timeouts Tracking
   const timeoutsRef = useRef<any[]>([]);
+  const completionStartedRef = useRef(false);
 
   const registerTimeout = (fn: () => void, ms: number) => {
     const timer = setTimeout(fn, ms);
@@ -129,6 +130,7 @@ export default function AudioLessonScreen() {
 
   // Handle start lesson from lobby
   const handleStartLesson = () => {
+    if (completionStartedRef.current) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setScreenState("connecting");
 
@@ -142,16 +144,20 @@ export default function AudioLessonScreen() {
 
     // Simulate connection delay
     registerTimeout(() => {
+      if (completionStartedRef.current) return;
       setScreenState("active");
       setIsTeacherSpeaking(true);
       // Brief speak simulation
-      registerTimeout(() => setIsTeacherSpeaking(false), 2000);
+      registerTimeout(() => {
+        if (completionStartedRef.current) return;
+        setIsTeacherSpeaking(false);
+      }, 2000);
     }, 1500);
   };
 
   // Simulate speaking to AI Teacher
   const handleSpeak = () => {
-    if (isListening || isTeacherSpeaking) return;
+    if (isListening || isTeacherSpeaking || completionStartedRef.current) return;
     const currentTurn = dialogueTurns[currentTurnIndex];
     if (!currentTurn || !currentTurn.userResponseText) return;
 
@@ -169,6 +175,7 @@ export default function AudioLessonScreen() {
 
     // Simulate listening for 2 seconds
     registerTimeout(() => {
+      if (completionStartedRef.current) return;
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setIsListening(false);
       setUserSpokenText(currentTurn.userResponseText);
@@ -176,12 +183,16 @@ export default function AudioLessonScreen() {
 
       // Advance turn after user is done speaking
       registerTimeout(() => {
+        if (completionStartedRef.current) return;
         if (currentTurnIndex < dialogueTurns.length - 1) {
           setCurrentTurnIndex((prev) => prev + 1);
           setUserSpokenText(null);
           setIsTeacherSpeaking(true);
           // Teacher speak simulation
-          registerTimeout(() => setIsTeacherSpeaking(false), 2000);
+          registerTimeout(() => {
+            if (completionStartedRef.current) return;
+            setIsTeacherSpeaking(false);
+          }, 2000);
         } else {
           // Last turn, show success modal
           handleEndCall();
@@ -192,14 +203,24 @@ export default function AudioLessonScreen() {
 
   // Trigger text-to-speech speaker button simulation
   const handleTTS = () => {
-    if (isTeacherSpeaking) return;
+    if (isTeacherSpeaking || completionStartedRef.current) return;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsTeacherSpeaking(true);
-    registerTimeout(() => setIsTeacherSpeaking(false), 2000);
+    registerTimeout(() => {
+      if (completionStartedRef.current) return;
+      setIsTeacherSpeaking(false);
+    }, 2000);
   };
 
   // End Call or complete lesson
   const handleEndCall = () => {
+    if (completionStartedRef.current) return;
+    completionStartedRef.current = true;
+
+    // Clear all registered timeouts and reset
+    timeoutsRef.current.forEach((tId) => clearTimeout(tId));
+    timeoutsRef.current = [];
+
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setScreenState("completed");
 

@@ -225,22 +225,25 @@ export default function HomeScreen() {
                 onPress={() => {
                   if (!isHydrated) return;
                   if (firstUncompleted) {
-                    void Haptics.selectionAsync();
                     handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
                   }
                 }}
-                disabled={!isHydrated}
+                disabled={!isHydrated || !firstUncompleted}
                 activeOpacity={0.85}
                 className={`px-7 py-3 rounded-full mt-5 self-start shadow-sm ${
-                  isHydrated ? "bg-white" : "bg-white/20"
+                  isHydrated && firstUncompleted ? "bg-white" : "bg-white/20"
                 }`}
               >
                 <Text
                   className={`font-poppins-bold text-sm ${
-                    isHydrated ? "text-[#4F46E5]" : "text-white/60"
+                    isHydrated && firstUncompleted ? "text-[#4F46E5]" : "text-white/60"
                   }`}
                 >
-                  {isHydrated ? "Continue Learning" : "Loading..."}
+                  {!isHydrated
+                    ? "Loading..."
+                    : !firstUncompleted
+                    ? "All Done! 🎉"
+                    : "Continue Learning"}
                 </Text>
               </TouchableOpacity>
             </View>
