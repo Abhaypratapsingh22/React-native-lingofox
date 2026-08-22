@@ -6,16 +6,16 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { usePostHog } from "posthog-react-native";
 import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -64,10 +64,11 @@ export default function SignUpScreen() {
 
       setGeneralError(message);
       setShowVerification(false);
-      console.warn(
-        "Sign up verification dispatch error:",
-        JSON.stringify(err, null, 2),
-      );
+      if (__DEV__) {
+        console.warn("Sign up verification dispatch error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 
@@ -85,13 +86,13 @@ export default function SignUpScreen() {
       }
 
       if (signUp.status === "complete") {
-        posthog.capture('sign_up_completed', { method: 'email' });
         await signUp.finalize({
           navigate: ({ session }) => {
             if (session?.currentTask) return;
             router.replace("/");
           },
         });
+        posthog.capture('sign_up_completed', { method: 'email' });
       } else {
         setVerificationError(`Sign-up status is incomplete: ${signUp.status}`);
       }
@@ -121,7 +122,11 @@ export default function SignUpScreen() {
         "Unable to resend the verification code. Please try again.";
 
       setVerificationError(message);
-      console.warn("Resend verification error:", JSON.stringify(err, null, 2));
+      if (__DEV__) {
+        console.warn("Resend verification error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 
@@ -140,7 +145,11 @@ export default function SignUpScreen() {
     } catch (err: any) {
       // User cancelled — do nothing
       if (err?.code === "SIGN_IN_CANCELLED" || err?.code === "-5") return;
-      console.warn("Google sign-in error:", JSON.stringify(err, null, 2));
+      if (__DEV__) {
+        console.warn("Google sign-in error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 

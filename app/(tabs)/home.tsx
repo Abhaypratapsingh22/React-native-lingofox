@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  AppState,
   DimensionValue,
   Image,
   ScrollView,
@@ -13,6 +14,7 @@ import { useUser } from "@clerk/expo";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { useIsFocused } from "@react-navigation/native";
 import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
@@ -42,7 +44,8 @@ export default function HomeScreen() {
   const languageStoreHydrated = useLanguageStore((state) => state.hasHydrated);
   const {
     completedLessons,
-    xp,
+    dailyXp,
+    checkDailyXpReset,
     streak,
     toggleCompletedLesson,
     resetProgress,
@@ -51,6 +54,37 @@ export default function HomeScreen() {
   } = useProgressStore();
 
   const isHydrated = languageStoreHydrated && progressStoreHydrated;
+  const isFocused = useIsFocused();
+  const lastResetRef = React.useRef<number>(0);
+
+  const triggerReset = React.useCallback(() => {
+    const now = Date.now();
+    // Avoid running within 1 second of the last run to prevent duplicates on single activation
+    if (now - lastResetRef.current > 1000) {
+      lastResetRef.current = now;
+      checkDailyXpReset();
+    }
+  }, [checkDailyXpReset]);
+
+  React.useEffect(() => {
+    if (!isHydrated || !isFocused) {
+      return;
+    }
+
+    // Trigger on initial hydration or when screen gains focus
+    triggerReset();
+
+    // Trigger when app returns to foreground
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState === "active") {
+        triggerReset();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [isHydrated, isFocused, triggerReset]);
 
   // Find selected language
   const selectedLanguage =
@@ -71,7 +105,7 @@ export default function HomeScreen() {
 
   // Daily Goal Specs (XP Target: 20)
   const dailyGoalXp = 20;
-  const progressRatio = Math.min(1, xp / dailyGoalXp);
+  const progressRatio = Math.min(1, dailyXp / dailyGoalXp);
   const progressPercentage = `${progressRatio * 100}%` as DimensionValue;
 
   // Get clerk user name greeting
@@ -113,28 +147,19 @@ export default function HomeScreen() {
       return;
     }
     void Haptics.selectionAsync();
+
     const lesson = sortedLessons.find((l) => l.id === lessonId);
     const isAlreadyCompleted = completedLessons.includes(lessonId);
-    if (isAlreadyCompleted) {
-      // Toggling off — no meaningful event to send
-    } else {
+    if (!isAlreadyCompleted) {
       posthog.capture('lesson_started', {
         lesson_id: lessonId,
         lesson_type: lesson?.type ?? null,
         language_id: selectedLanguageId,
         xp_reward: xpReward,
       });
-      posthog.capture('lesson_completed', {
-        lesson_id: lessonId,
-        lesson_type: lesson?.type ?? null,
-        language_id: selectedLanguageId,
-        xp_earned: xpReward,
-        total_xp_after: xp + xpReward,
-        streak: streak,
-      });
     }
-    // Toggle completion on click for interactive learning UI demo
-    toggleCompletedLesson(lessonId, xpReward);
+
+    router.push(`/lesson/${lessonId}` as any);
   };
 
   return (
@@ -205,7 +230,7 @@ export default function HomeScreen() {
                 </Text>
                 <View className="flex-row items-baseline mt-1">
                   <Text className="font-poppins-bold text-[28px] text-text-primary">
-                    {xp}
+                    {dailyXp}
                   </Text>
                   <Text className="font-poppins text-base text-[#64748B] ml-1">
                     / {dailyGoalXp} XP
@@ -248,24 +273,25 @@ export default function HomeScreen() {
                 onPress={() => {
                   if (!isHydrated) return;
                   if (firstUncompleted) {
-                    if (__DEV__) {
-                      void Haptics.selectionAsync();
-                      handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
-                    }
+                    handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
                   }
                 }}
-                disabled={!isHydrated || !__DEV__}
+                disabled={!isHydrated || !firstUncompleted}
                 activeOpacity={0.85}
                 className={`px-7 py-3 rounded-full mt-5 self-start shadow-sm ${
-                  isHydrated && __DEV__ ? "bg-white" : "bg-white/20"
+                  isHydrated && firstUncompleted ? "bg-white" : "bg-white/20"
                 }`}
               >
                 <Text
                   className={`font-poppins-bold text-sm ${
-                    isHydrated && __DEV__ ? "text-[#4F46E5]" : "text-white/60"
+                    isHydrated && firstUncompleted ? "text-[#4F46E5]" : "text-white/60"
                   }`}
                 >
-                  {isHydrated && __DEV__ ? "Complete Lesson (Dev)" : !isHydrated ? "Loading..." : "Locked"}
+                  {!isHydrated
+                    ? "Loading..."
+                    : !firstUncompleted
+                    ? "All Done! 🎉"
+                    : "Continue Learning"}
                 </Text>
               </TouchableOpacity>
             </View>

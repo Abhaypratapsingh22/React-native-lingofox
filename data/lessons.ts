@@ -763,8 +763,8 @@ export const vocabulary: VocabularyWord[] = [
     translation: "one",
     pronunciation: "ichi",
     partOfSpeech: "numeral",
-    exampleSentence: "りんごが一つあります。",
-    exampleTranslation: "There is one apple.",
+    exampleSentence: "いちです。",
+    exampleTranslation: "It is one.",
   },
   {
     id: "ja-vocab-ni",
@@ -783,7 +783,7 @@ export const vocabulary: VocabularyWord[] = [
     translation: "three",
     pronunciation: "san",
     partOfSpeech: "numeral",
-    exampleSentence: "ペンがさん本あります。",
+    exampleSentence: "ペンがさんぼんあります。",
     exampleTranslation: "There are three pens.",
   },
   {
@@ -793,7 +793,7 @@ export const vocabulary: VocabularyWord[] = [
     translation: "four",
     pronunciation: "yon",
     partOfSpeech: "numeral",
-    exampleSentence: "よん人います。",
+    exampleSentence: "よにんいます。",
     exampleTranslation: "There are four people.",
   },
   {
@@ -803,7 +803,7 @@ export const vocabulary: VocabularyWord[] = [
     translation: "five",
     pronunciation: "go",
     partOfSpeech: "numeral",
-    exampleSentence: "ご時です。",
+    exampleSentence: "ごじです。",
     exampleTranslation: "It is five o'clock.",
   },
   {

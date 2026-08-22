@@ -67,15 +67,17 @@ export function VerificationModal({
   }, [error]);
 
   const handleCodeChange = (text: string) => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+
     // Only allow numeric digits up to 6 characters
     const numericText = text.replace(/[^0-9]/g, "").slice(0, 6);
     setCode(numericText);
 
     // When 6th digit is entered, trigger verification
     if (numericText.length === 6 && onVerify) {
-      if (verifyTimerRef.current) {
-        clearTimeout(verifyTimerRef.current);
-      }
       verifyTimerRef.current = setTimeout(() => {
         verifyTimerRef.current = null;
         void onVerify(numericText);
@@ -83,7 +85,19 @@ export function VerificationModal({
     }
   };
 
+  const handleClose = () => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+    onClose();
+  };
+
   const handleResend = async () => {
+    if (verifyTimerRef.current) {
+      clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
     setCode("");
     if (onResend) {
       await onResend();
@@ -100,14 +114,14 @@ export function VerificationModal({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         behavior="padding"
         style={styles.overlay}
         keyboardVerticalOffset={Platform.OS === "ios" ? 12 : 0}
       >
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Pressable style={styles.backdrop} onPress={handleClose} />
 
         <View className="w-full max-w-sm px-4">
           <View
@@ -116,7 +130,7 @@ export function VerificationModal({
           >
             {/* Close Button */}
             <TouchableOpacity
-              onPress={onClose}
+              onPress={handleClose}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Close verification"

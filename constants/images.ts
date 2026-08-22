@@ -12,6 +12,8 @@ import reactLogo from "@/assets/images/react-logo.png";
 import splashIcon from "@/assets/images/splash-icon.png";
 import streakFire from "@/assets/images/streak-fire.png";
 import treasure from "@/assets/images/treasure.png";
+import learnHeroBanner from "@/assets/images/learn-hero-banner.jpg";
+import mascotCafe from "@/assets/images/mascot-cafe.png";
 
 export const images = {
   androidIconBackground,
@@ -28,6 +30,8 @@ export const images = {
   splashIcon,
   streakFire,
   treasure,
+  learnHeroBanner,
+  mascotCafe,
 };
 
 export default images;

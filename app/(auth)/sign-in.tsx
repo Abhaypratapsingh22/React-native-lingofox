@@ -29,12 +29,14 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [showVerification, setShowVerification] = useState(false);
   const [verificationError, setVerificationError] = useState<string>();
+  const [generalError, setGeneralError] = useState<string>();
   const [isVerifying, setIsVerifying] = useState(false);
   const isFetching = fetchStatus === "fetching";
 
   const handleSignIn = async () => {
     if (!signIn) return;
     if (!email.trim()) return;
+    setGeneralError(undefined);
 
     try {
       const createResult = await signIn.create({ identifier: email });
@@ -59,11 +61,13 @@ export default function SignInScreen() {
         "Unable to send the sign-in verification code. Please try again.";
 
       setVerificationError(message);
+      setGeneralError(message);
       setShowVerification(false);
-      console.warn(
-        "Email sign-in dispatch error:",
-        JSON.stringify(err, null, 2),
-      );
+      if (__DEV__) {
+        console.warn("Email sign-in dispatch error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 
@@ -84,9 +88,17 @@ export default function SignInScreen() {
       }
 
       if (signIn.createdSessionId) {
-        await clerk.setActive({ session: signIn.createdSessionId });
         posthog.capture('sign_in_completed', { method: 'email' });
-        router.replace("/");
+        
+        // Handle currentTask if it exists
+        if (clerk.session?.currentTask) {
+          // Route to task screen if needed, otherwise fallback to "/"
+          router.replace("/");
+        } else {
+          router.replace("/");
+        }
+      } else {
+        setVerificationError("Verification succeeded but no session ID was returned. Please try again.");
       }
     } catch (err: any) {
       const message =
@@ -95,7 +107,11 @@ export default function SignInScreen() {
         "Invalid verification code. Please try again.";
 
       setVerificationError(message);
-      console.warn("Email verification error:", JSON.stringify(err, null, 2));
+      if (__DEV__) {
+        console.warn("Email verification error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -123,10 +139,11 @@ export default function SignInScreen() {
         "Unable to resend the verification code. Please try again.";
 
       setVerificationError(message);
-      console.warn(
-        "Resend email verification error:",
-        JSON.stringify(err, null, 2),
-      );
+      if (__DEV__) {
+        console.warn("Resend email verification error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 
@@ -142,7 +159,11 @@ export default function SignInScreen() {
       }
     } catch (err: any) {
       if (err?.code === "SIGN_IN_CANCELLED" || err?.code === "-5") return;
-      console.warn("Google OAuth error:", JSON.stringify(err, null, 2));
+      if (__DEV__) {
+        console.warn("Google OAuth error:", {
+          code: err?.errors?.[0]?.code ?? err?.code,
+        });
+      }
     }
   };
 
@@ -211,6 +232,12 @@ export default function SignInScreen() {
               />
             </View>
           </View>
+
+          {generalError && (
+            <Text className="font-poppins text-xs text-red-500 mt-2 ml-1 text-center">
+              {generalError}
+            </Text>
+          )}
 
           {/* Sign In CTA Button */}
           <TouchableOpacity

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { languages } from "@/data/languages";
@@ -13,9 +13,15 @@ export default function LanguageSelectionScreen() {
   const router = useRouter();
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
   const setSelectedLanguageId = useLanguageStore((state) => state.setSelectedLanguageId);
+  const hasHydrated = useLanguageStore((state) => state.hasHydrated);
   const posthog = usePostHog();
-  const [selectedId, setSelectedId] = useState<string | null>(selectedLanguageId);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (hasHydrated && selectedLanguageId) {
+      setSelectedId(selectedLanguageId);
+    }
+  }, [hasHydrated, selectedLanguageId]);
   const handleConfirm = () => {
     if (selectedId) {
       const selectedLang = languages.find((l) => l.id === selectedId);
@@ -113,17 +119,17 @@ export default function LanguageSelectionScreen() {
       <View className="px-6 py-4 border-t border-gray-100 bg-white">
         <TouchableOpacity
           onPress={handleConfirm}
-          disabled={!selectedId}
+          disabled={!hasHydrated || !selectedId}
           activeOpacity={0.85}
           className={`w-full h-14 rounded-2xl items-center justify-center ${
-            selectedId ? "bg-brand-blue" : "bg-gray-200"
+            hasHydrated && selectedId ? "bg-brand-blue" : "bg-gray-200"
           }`}
           accessibilityRole="button"
           accessibilityLabel="Confirm language selection"
         >
           <Text
             className={`font-poppins-semibold text-lg ${
-              selectedId ? "text-white" : "text-gray-400"
+              hasHydrated && selectedId ? "text-white" : "text-gray-400"
             }`}
           >
             Confirm Selection
