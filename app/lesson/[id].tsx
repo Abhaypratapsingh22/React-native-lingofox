@@ -58,6 +58,7 @@ export default function AudioLessonScreen() {
   // Timeouts Tracking
   const timeoutsRef = useRef<any[]>([]);
   const completionStartedRef = useRef(false);
+  const lessonStartTimeRef = useRef<number | null>(null);
 
   const registerTimeout = (fn: () => void, ms: number) => {
     const timer = setTimeout(fn, ms);
@@ -133,6 +134,7 @@ export default function AudioLessonScreen() {
     if (completionStartedRef.current) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setScreenState("connecting");
+    lessonStartTimeRef.current = Date.now();
 
     // Capture starting analytics
     posthog.capture("lesson_started", {
@@ -224,14 +226,30 @@ export default function AudioLessonScreen() {
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setScreenState("completed");
 
-    // Capture completion analytics
-    posthog.capture("lesson_completed", {
-      lesson_id: id,
-      lesson_type: lesson?.type ?? null,
-      language_id: languageId,
-      xp_earned: lesson?.xp ?? 20,
-      streak: streak,
-    });
+    const durationSeconds = lessonStartTimeRef.current
+      ? Math.round((Date.now() - lessonStartTimeRef.current) / 1000)
+      : null;
+
+    // Only the final turn counts as a completion; earlier hang-ups are early exits
+    if (currentTurnIndex === dialogueTurns.length - 1) {
+      posthog.capture("lesson_completed", {
+        lesson_id: id,
+        lesson_type: lesson?.type ?? null,
+        language_id: languageId,
+        xp_earned: lesson?.xp ?? 20,
+        streak: streak,
+        duration_seconds: durationSeconds,
+      });
+    } else {
+      posthog.capture("lesson_ended_early", {
+        lesson_id: id,
+        lesson_type: lesson?.type ?? null,
+        language_id: languageId,
+        duration_seconds: durationSeconds,
+        turn_index: currentTurnIndex,
+        total_turns: dialogueTurns.length,
+      });
+    }
   };
 
   // Save progress in Zustand and go back
