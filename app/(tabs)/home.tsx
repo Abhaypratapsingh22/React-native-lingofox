@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useIsFocused } from "@react-navigation/native";
-import { usePostHog } from "posthog-react-native";
 
 import { useLanguageStore } from "@/store/useLanguageStore";
 import { useProgressStore } from "@/store/useProgressStore";
@@ -37,7 +36,6 @@ const GREETINGS: Record<string, string> = {
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useUser();
-  const posthog = usePostHog();
 
   // Zustand State
   const selectedLanguageId = useLanguageStore((state) => state.selectedLanguageId);
@@ -140,25 +138,13 @@ export default function HomeScreen() {
     }
   };
 
-  const handleLessonClick = (lessonId: string, xpReward: number, isLocked: boolean) => {
+  const handleLessonClick = (lessonId: string, isLocked: boolean) => {
     if (!isHydrated) return;
     if (isLocked) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
     void Haptics.selectionAsync();
-
-    const lesson = sortedLessons.find((l) => l.id === lessonId);
-    const isAlreadyCompleted = completedLessons.includes(lessonId);
-    if (!isAlreadyCompleted) {
-      posthog.capture('lesson_started', {
-        lesson_id: lessonId,
-        lesson_type: lesson?.type ?? null,
-        language_id: selectedLanguageId,
-        xp_reward: xpReward,
-      });
-    }
-
     router.push(`/lesson/${lessonId}` as any);
   };
 
@@ -273,7 +259,7 @@ export default function HomeScreen() {
                 onPress={() => {
                   if (!isHydrated) return;
                   if (firstUncompleted) {
-                    handleLessonClick(firstUncompleted.id, firstUncompleted.xp, false);
+                    handleLessonClick(firstUncompleted.id, false);
                   }
                 }}
                 disabled={!isHydrated || !firstUncompleted}
@@ -333,7 +319,7 @@ export default function HomeScreen() {
               return (
                 <TouchableOpacity
                   key={lesson.id}
-                  onPress={() => handleLessonClick(lesson.id, lesson.xp, isLocked)}
+                  onPress={() => handleLessonClick(lesson.id, isLocked)}
                   activeOpacity={isLocked ? 1 : 0.8}
                   style={[styles.itemCard, isLocked && styles.lockedCard]}
                   className="flex-row items-center p-4 bg-white border border-[#F1F5F9] rounded-2xl"
